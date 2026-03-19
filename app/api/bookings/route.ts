@@ -3,6 +3,8 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
 import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { createAndSendBookingNotification } from "@/lib/notifications/booking-email";
+import { createGoogleMeetEventForBooking } from "@/lib/integrations/google-calendar";
 import {
   isPrismaUniqueConstraintError,
   parseJsonBody,
@@ -75,6 +77,14 @@ export async function POST(request: NextRequest) {
     select: {
       id: true,
       duration: true,
+      name: true,
+      host: {
+        select: {
+          name: true,
+          email: true,
+          timezone: true,
+        },
+      },
     },
   });
 
@@ -92,7 +102,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const booking = await prisma.booking.create({
+    let booking = await prisma.booking.create({
       data: {
         hostId: parsedBody.data.hostId,
         eventTypeId: parsedBody.data.eventTypeId,
@@ -109,21 +119,69 @@ export async function POST(request: NextRequest) {
             timezone: parsedBody.data.attendeeTimezone,
           },
         },
-        notificationLogs: {
-          create: {
-            userId: parsedBody.data.hostId,
-            type: "BOOKING_CONFIRMATION",
-            status: "PENDING",
-            channel: "EMAIL",
-            recipient: parsedBody.data.guestEmail,
-          },
-        },
       },
       include: {
         attendees: true,
         eventType: true,
       },
     });
+
+    try {
+      const calendarEvent = await createGoogleMeetEventForBooking({
+        bookingId: booking.id,
+        hostId: parsedBody.data.hostId,
+        hostEmail: eventType.host?.email ?? null,
+        hostTimezone: eventType.host?.timezone ?? "UTC",
+        eventTypeName: eventType.name,
+        guestEmail: booking.guestEmail,
+        guestName: booking.guestName,
+        guestNotes: booking.guestNotes,
+        startTimeUtc: booking.startTimeUtc,
+        endTimeUtc: booking.endTimeUtc,
+      });
+
+      const meetingLink = calendarEvent?.meetLink ?? calendarEvent?.htmlLink ?? null;
+      const googleCalendarEventId = calendarEvent?.eventId ?? null;
+
+      if (meetingLink || googleCalendarEventId) {
+        booking = await prisma.booking.update({
+          where: { id: booking.id },
+          data: {
+            meetingLink: meetingLink ?? booking.meetingLink,
+            googleCalendarEventId:
+              googleCalendarEventId ?? booking.googleCalendarEventId,
+          },
+          include: {
+            attendees: true,
+            eventType: true,
+          },
+        });
+      }
+    } catch (calendarError) {
+      console.error("Failed to create Google Calendar event for booking", {
+        bookingId: booking.id,
+        calendarError,
+      });
+    }
+
+    try {
+      await createAndSendBookingNotification({
+        bookingId: booking.id,
+        userId: parsedBody.data.hostId,
+        type: "BOOKING_CONFIRMATION",
+        recipient: booking.guestEmail,
+        eventTypeName: eventType.name,
+        startTimeUtc: booking.startTimeUtc,
+        endTimeUtc: booking.endTimeUtc,
+        meetingLink: booking.meetingLink,
+        hostName: eventType.host?.name ?? null,
+      });
+    } catch (notificationError) {
+      console.error("Failed to send booking confirmation email", {
+        bookingId: booking.id,
+        notificationError,
+      });
+    }
 
     return ok(booking, 201);
   } catch (error) {

@@ -122,6 +122,7 @@ model Booking {
   guestName       String?
   guestNotes      String?
   meetingLink     String?
+  googleCalendarEventId String?
   cancelReason    String?
   cancelledBy     String?
   cancelledAt     DateTime?
@@ -138,6 +139,7 @@ model Booking {
   @@index([hostId, startTimeUtc])
   @@index([eventTypeId, startTimeUtc])
   @@index([status])
+  @@index([googleCalendarEventId])
 }
 
 model Attendee {
