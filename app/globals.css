@@ -121,6 +121,11 @@
     }
   body {
     @apply bg-background text-foreground;
+    background-image:
+      radial-gradient(circle at 20% 0%, color-mix(in oklab, var(--primary) 10%, transparent) 0, transparent 28%),
+      radial-gradient(circle at 80% 12%, color-mix(in oklab, var(--secondary) 35%, transparent) 0, transparent 24%),
+      linear-gradient(to bottom, color-mix(in oklab, var(--background) 96%, var(--foreground) 4%), var(--background));
+    background-attachment: fixed;
     }
   html {
     @apply font-sans;
