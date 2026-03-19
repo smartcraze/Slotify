@@ -175,22 +175,30 @@ model CalendarConnection {
 }
 
 model Payment {
-  id              String        @id @default(cuid())
-  bookingId       String        @unique
-  hostId          String
-  amount          Int
-  currency        String        @default("USD")
-  status          PaymentStatus @default(PENDING)
-  refundAmount    Int?
-  refundedAt      DateTime?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-  
-  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  host            User          @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  id                       String        @id @default(cuid())
+  bookingId                String        @unique
+  hostId                   String
+  amount                   Int
+  currency                 String        @default("INR")
+  status                   PaymentStatus @default(PENDING)
+  razorpayOrderId          String        @unique
+  razorpayPaymentId        String?       @unique
+  razorpaySignature        String?
+  razorpayRefundId         String?       @unique
+  failureCode              String?
+  failureDescription       String?
+  refundAmount             Int?
+  refundedAt               DateTime?
+  capturedAt               DateTime?
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+
+  booking                  Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  host                     User          @relation(fields: [hostId], references: [id], onDelete: Cascade)
 
   @@index([bookingId])
   @@index([hostId, status])
+  @@index([razorpayPaymentId])
 }
 
 model NotificationLog {
