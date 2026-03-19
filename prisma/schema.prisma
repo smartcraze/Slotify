@@ -45,58 +45,218 @@ model VerificationRequest {
   @@unique([identifier, token])
 }
 
-model User {
-  id            String          @id @default(cuid())
-  name          String?
-  email         String?         @unique
-  emailVerified DateTime?
-  image         String?
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
 
-  accounts      Account[]
-  sessions      Session[]
-  schedules     Booking[]
-  slots         AvailableSlot[]
+model User {
+  id                String                @id @default(cuid())
+  name              String?
+  email             String?               @unique
+  emailVerified     DateTime?
+  image             String?
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  bio               String?
+  timezone          String?               @default("UTC")
+  
+  accounts          Account[]
+  sessions          Session[]
+  eventTypes        EventType[]
+  availabilityRules AvailabilityRule[]
+  bookings          Booking[]
+  calendarConnections CalendarConnection[]
+  payments          Payment[]
+  notificationLogs  NotificationLog[]
 }
 
+model EventType {
+  id              String    @id @default(cuid())
+  hostId          String
+  name            String
+  description     String?
+  duration        Int       @default(30)
+  slug            String
+  status          EventTypeStatus @default(ACTIVE)
+  isPublic        Boolean   @default(true)
+  bufferBefore    Int       @default(0)
+  bufferAfter     Int       @default(0)
+  minNoticeMinutes Int      @default(0)
+  maxAdvanceDays  Int       @default(365)
+  dailyCapacity   Int       @default(999)
+  color           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  host            User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  bookings        Booking[]
+  availabilityRules AvailabilityRule[]
+
+  @@unique([hostId, slug])
+  @@index([hostId, status])
+}
+
+model AvailabilityRule {
+  id              String    @id @default(cuid())
+  hostId          String
+  eventTypeId     String?
+  dayOfWeek       Int
+  startTime       String
+  endTime         String
+  isRecurring     Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  host            User      @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  eventType       EventType? @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+
+  @@unique([hostId, eventTypeId, dayOfWeek])
+  @@index([hostId, dayOfWeek])
+}
 
 model Booking {
-  id          String  @id @default(cuid())
-  userId      String
-  description String?
-  meetingLink String?
-  startTime     DateTime
-  endTime       DateTime
-  attendeeEmail String
-  status       TimeSlotStatus @default(BOOKED)
-  user User @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id              String        @id @default(cuid())
+  hostId          String
+  eventTypeId     String
+  startTimeUtc    DateTime
+  endTimeUtc      DateTime
+  status          BookingStatus @default(PENDING)
+  guestEmail      String
+  guestName       String?
+  guestNotes      String?
+  meetingLink     String?
+  cancelReason    String?
+  cancelledBy     String?
+  cancelledAt     DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  host            User          @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  eventType       EventType     @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
+  attendees       Attendee[]
+  payment         Payment?
+  notificationLogs NotificationLog[]
 
-  @@unique([userId, startTime])
-  @@index([userId, startTime])
+  @@unique([hostId, eventTypeId, startTimeUtc])
+  @@index([hostId, startTimeUtc])
+  @@index([eventTypeId, startTimeUtc])
+  @@index([status])
 }
 
-
-enum TimeSlotStatus {
-  AVAILABLE
-  BOOKED
-  CANCELLED
-}
-
-model AvailableSlot {
+model Attendee {
   id        String   @id @default(cuid())
-  userId    String
-  startTime DateTime
-  endTime   DateTime
-
-  user User @relation(fields: [userId], references: [id])
-
+  bookingId String
+  email     String
+  name      String?
+  timezone  String?  @default("UTC")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  booking   Booking  @relation(fields: [bookingId], references: [id], onDelete: Cascade)
 
-  @@index([userId, startTime])
+  @@index([bookingId])
+  @@index([email])
+}
+
+model CalendarConnection {
+  id               String                  @id @default(cuid())
+  userId           String
+  provider         String
+  status           CalendarConnectionStatus @default(CONNECTED)
+  accessToken      String?
+  refreshToken     String?
+  expiresAt        DateTime?
+  calendarId       String?
+  lastSyncAt       DateTime?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  
+  user             User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId, status])
+}
+
+model Payment {
+  id              String        @id @default(cuid())
+  bookingId       String        @unique
+  hostId          String
+  amount          Int
+  currency        String        @default("USD")
+  status          PaymentStatus @default(PENDING)
+  stripePaymentId String?       @unique
+  refundAmount    Int?
+  refundedAt      DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  
+  booking         Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  host            User          @relation(fields: [hostId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([hostId, status])
+}
+
+model NotificationLog {
+  id               String             @id @default(cuid())
+  bookingId        String
+  userId           String
+  type             NotificationType   @default(BOOKING_CONFIRMATION)
+  status           NotificationStatus @default(PENDING)
+  channel          String
+  recipient        String
+  sentAt           DateTime?
+  deliveredAt      DateTime?
+  failureReason    String?
+  retryCount       Int                @default(0)
+  nextRetryAt      DateTime?
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  booking          Booking            @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  user             User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([bookingId])
+  @@index([userId, status])
+  @@index([status, nextRetryAt])
+}
+
+enum EventTypeStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  RESCHEDULED
+  COMPLETED
+}
+
+enum CalendarConnectionStatus {
+  CONNECTED
+  DISCONNECTED
+  ERROR
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  DELIVERED
+}
+
+enum NotificationType {
+  BOOKING_CONFIRMATION
+  BOOKING_REMINDER
+  BOOKING_CANCELLED
+  BOOKING_RESCHEDULED
+  BOOKING_COMPLETED
 }
 
 
