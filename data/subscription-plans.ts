@@ -14,7 +14,7 @@ export type SubscriptionFeatureKey =
   | "PAYMENTS";
 
 export type SubscriptionPlan = {
-  tier: Exclude<SubscriptionTier, "FREE">;
+  tier: SubscriptionTier;
   name: string;
   monthlyPriceInr: number;
   yearlyPriceInr: number;
@@ -23,6 +23,14 @@ export type SubscriptionPlan = {
 };
 
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
+  {
+    tier: "FREE",
+    name: "Free",
+    monthlyPriceInr: 0,
+    yearlyPriceInr: 0,
+    description: "Limited scheduling with basic booking workflows",
+    features: ["CORE_SCHEDULING"],
+  },
   {
     tier: "STARTER",
     name: "Starter",
@@ -60,7 +68,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 ];
 
 export const FEATURE_MINIMUM_TIER: Record<SubscriptionFeatureKey, SubscriptionTier> = {
-  CORE_SCHEDULING: "STARTER",
+  CORE_SCHEDULING: "FREE",
   GOOGLE_CALENDAR_MEET: "PRO",
   EMAIL_NOTIFICATIONS: "PRO",
   PAYMENTS: "STARTER",

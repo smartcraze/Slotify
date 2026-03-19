@@ -39,6 +39,16 @@ function hasMinimumTier(currentTier: SubscriptionTier, minimumTier: Subscription
 }
 
 function hasFeatureAccess(snapshot: SubscriptionSnapshot, feature: SubscriptionFeatureKey) {
+  const minimumTier = FEATURE_MINIMUM_TIER[feature];
+
+  if (!hasMinimumTier(snapshot.subscriptionTier, minimumTier)) {
+    return false;
+  }
+
+  if (minimumTier === "FREE") {
+    return true;
+  }
+
   if (!isPaidTier(snapshot.subscriptionTier)) {
     return false;
   }
@@ -51,8 +61,7 @@ function hasFeatureAccess(snapshot: SubscriptionSnapshot, feature: SubscriptionF
     return false;
   }
 
-  const minimumTier = FEATURE_MINIMUM_TIER[feature];
-  return hasMinimumTier(snapshot.subscriptionTier, minimumTier);
+  return true;
 }
 
 async function getSubscriptionSnapshot(userId: string): Promise<SubscriptionSnapshot | null> {
