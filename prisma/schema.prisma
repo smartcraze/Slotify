@@ -181,7 +181,6 @@ model Payment {
   amount          Int
   currency        String        @default("USD")
   status          PaymentStatus @default(PENDING)
-  stripePaymentId String?       @unique
   refundAmount    Int?
   refundedAt      DateTime?
   createdAt       DateTime      @default(now())

@@ -10,7 +10,7 @@ This version has breaking changes. APIs, conventions, and file structure may dif
 - Next.js 16 (App Router) + React 19 rules apply. Prefer server components. 
 - Use TypeScript strictly. Use the `@/*` alias for workspace imports.
 - Utilize Tailwind CSS v4 and shadcn/Radix UI primitives.
-- Do not edit generated Prisma client files natively, they output to `app/generated/prisma`.
+- Do not edit generated Prisma client files natively, they output to `generated/prisma`.
 
 ## Build and Test
 - Package manager: **Bun**. All scripts must use Bun (e.g., `bun run dev`, `bun install`).
