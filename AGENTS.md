@@ -74,3 +74,12 @@ Build in phased increments: first harden the scheduling domain model and booking
 1. Payment provider choice recommendation: Option A Stripe (best ecosystem), Option B Razorpay (regional fit), Option C hybrid by locale.
 2. Calendar sync model recommendation: Option A read busy-only with external write-back, Option B full two-way sync, Option C one-way first then upgrade.
 3. Team scheduling launch recommendation: Option A round-robin first, Option B collective first, Option C both behind feature flags.
+
+
+
+
+
+
+
+
+
