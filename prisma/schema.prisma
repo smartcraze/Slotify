@@ -56,6 +56,10 @@ model User {
   updatedAt         DateTime              @updatedAt
   bio               String?
   timezone          String?               @default("UTC")
+  subscriptionTier  SubscriptionTier      @default(FREE)
+  subscriptionStatus SubscriptionStatus   @default(INACTIVE)
+  subscriptionStartsAt DateTime?
+  subscriptionEndsAt DateTime?
   
   accounts          Account[]
   sessions          Session[]
@@ -266,6 +270,21 @@ enum NotificationType {
   BOOKING_CANCELLED
   BOOKING_RESCHEDULED
   BOOKING_COMPLETED
+}
+
+enum SubscriptionTier {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  INACTIVE
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELED
 }
 
 

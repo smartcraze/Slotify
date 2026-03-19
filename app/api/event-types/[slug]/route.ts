@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
+import { canHostAccessFeature } from "@/lib/subscription/access";
 import { parseParams, parseQuery } from "@/lib/api/validation";
 import {
   eventTypeHostQuerySchema,
@@ -24,6 +25,19 @@ export async function GET(request: NextRequest, context: RouteContext) {
 
   if (!parsedQuery.success) {
     return fail("BAD_REQUEST", "Invalid query parameters", 400, parsedQuery.details);
+  }
+
+  const hasCoreScheduling = await canHostAccessFeature(
+    parsedQuery.data.hostId,
+    "CORE_SCHEDULING"
+  );
+
+  if (!hasCoreScheduling) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "This host requires an active paid subscription to publish event types",
+      402
+    );
   }
 
   const eventType = await prisma.eventType.findUnique({

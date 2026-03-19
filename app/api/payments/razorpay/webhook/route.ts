@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
 import { verifyRazorpayWebhookSignature } from "@/lib/payments/razorpay";
+import { canHostAccessFeature } from "@/lib/subscription/access";
 import { razorpayWebhookBodySchema } from "@/types/api/payments";
 
 function fromUnixTimestamp(seconds?: number) {
@@ -53,11 +54,17 @@ export async function POST(request: NextRequest) {
 
     const payment = await prisma.payment.findUnique({
       where: { razorpayOrderId: paymentEntity.order_id },
-      select: { id: true, bookingId: true, status: true },
+      select: { id: true, bookingId: true, status: true, hostId: true },
     });
 
     if (!payment) {
       return ok({ received: true, ignored: true, reason: "Unknown order id" });
+    }
+
+    const canUsePayments = await canHostAccessFeature(payment.hostId, "PAYMENTS");
+
+    if (!canUsePayments) {
+      return ok({ received: true, ignored: true, reason: "Host payment feature disabled" });
     }
 
     await prisma.payment.update({
@@ -86,11 +93,17 @@ export async function POST(request: NextRequest) {
 
     const payment = await prisma.payment.findUnique({
       where: { razorpayOrderId: paymentEntity.order_id },
-      select: { id: true, bookingId: true },
+      select: { id: true, bookingId: true, hostId: true },
     });
 
     if (!payment) {
       return ok({ received: true, ignored: true, reason: "Unknown order id" });
+    }
+
+    const canUsePayments = await canHostAccessFeature(payment.hostId, "PAYMENTS");
+
+    if (!canUsePayments) {
+      return ok({ received: true, ignored: true, reason: "Host payment feature disabled" });
     }
 
     await prisma.payment.update({
@@ -115,11 +128,17 @@ export async function POST(request: NextRequest) {
 
     const payment = await prisma.payment.findUnique({
       where: { razorpayPaymentId: paymentId },
-      select: { id: true },
+      select: { id: true, hostId: true },
     });
 
     if (!payment) {
       return ok({ received: true, ignored: true, reason: "Unknown payment id" });
+    }
+
+    const canUsePayments = await canHostAccessFeature(payment.hostId, "PAYMENTS");
+
+    if (!canUsePayments) {
+      return ok({ received: true, ignored: true, reason: "Host payment feature disabled" });
     }
 
     await prisma.payment.update({

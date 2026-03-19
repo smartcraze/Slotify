@@ -5,6 +5,7 @@ import { fail, ok } from "@/lib/api/response";
 import { getAuthenticatedUserId } from "@/lib/auth/session";
 import { createAndSendBookingNotification } from "@/lib/notifications/booking-email";
 import { createGoogleMeetEventForBooking } from "@/lib/integrations/google-calendar";
+import { canHostAccessFeature, canUserAccessFeature } from "@/lib/subscription/access";
 import {
   isPrismaUniqueConstraintError,
   parseJsonBody,
@@ -20,6 +21,16 @@ export async function GET(request: NextRequest) {
 
   if (!userId) {
     return fail("UNAUTHORIZED", "Authentication required", 401);
+  }
+
+  const hasCoreScheduling = await canUserAccessFeature(userId, "CORE_SCHEDULING");
+
+  if (!hasCoreScheduling) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "An active paid subscription is required to access bookings",
+      402
+    );
   }
 
   const parsedQuery = parseQuery(request.nextUrl.searchParams, listBookingsQuerySchema);
@@ -67,6 +78,24 @@ export async function POST(request: NextRequest) {
   if (!parsedBody.success) {
     return fail("BAD_REQUEST", "Invalid request body", 400, parsedBody.details);
   }
+
+  const hasCoreScheduling = await canHostAccessFeature(
+    parsedBody.data.hostId,
+    "CORE_SCHEDULING"
+  );
+
+  if (!hasCoreScheduling) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "Host must have an active paid subscription to accept bookings",
+      402
+    );
+  }
+
+  const canUseGoogleMeet = await canHostAccessFeature(
+    parsedBody.data.hostId,
+    "GOOGLE_CALENDAR_MEET"
+  );
 
   const eventType = await prisma.eventType.findFirst({
     where: {
@@ -126,42 +155,44 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    try {
-      const calendarEvent = await createGoogleMeetEventForBooking({
-        bookingId: booking.id,
-        hostId: parsedBody.data.hostId,
-        hostEmail: eventType.host?.email ?? null,
-        hostTimezone: eventType.host?.timezone ?? "UTC",
-        eventTypeName: eventType.name,
-        guestEmail: booking.guestEmail,
-        guestName: booking.guestName,
-        guestNotes: booking.guestNotes,
-        startTimeUtc: booking.startTimeUtc,
-        endTimeUtc: booking.endTimeUtc,
-      });
+    if (canUseGoogleMeet) {
+      try {
+        const calendarEvent = await createGoogleMeetEventForBooking({
+          bookingId: booking.id,
+          hostId: parsedBody.data.hostId,
+          hostEmail: eventType.host?.email ?? null,
+          hostTimezone: eventType.host?.timezone ?? "UTC",
+          eventTypeName: eventType.name,
+          guestEmail: booking.guestEmail,
+          guestName: booking.guestName,
+          guestNotes: booking.guestNotes,
+          startTimeUtc: booking.startTimeUtc,
+          endTimeUtc: booking.endTimeUtc,
+        });
 
-      const meetingLink = calendarEvent?.meetLink ?? calendarEvent?.htmlLink ?? null;
-      const googleCalendarEventId = calendarEvent?.eventId ?? null;
+        const meetingLink = calendarEvent?.meetLink ?? calendarEvent?.htmlLink ?? null;
+        const googleCalendarEventId = calendarEvent?.eventId ?? null;
 
-      if (meetingLink || googleCalendarEventId) {
-        booking = await prisma.booking.update({
-          where: { id: booking.id },
-          data: {
-            meetingLink: meetingLink ?? booking.meetingLink,
-            googleCalendarEventId:
-              googleCalendarEventId ?? booking.googleCalendarEventId,
-          },
-          include: {
-            attendees: true,
-            eventType: true,
-          },
+        if (meetingLink || googleCalendarEventId) {
+          booking = await prisma.booking.update({
+            where: { id: booking.id },
+            data: {
+              meetingLink: meetingLink ?? booking.meetingLink,
+              googleCalendarEventId:
+                googleCalendarEventId ?? booking.googleCalendarEventId,
+            },
+            include: {
+              attendees: true,
+              eventType: true,
+            },
+          });
+        }
+      } catch (calendarError) {
+        console.error("Failed to create Google Calendar event for booking", {
+          bookingId: booking.id,
+          calendarError,
         });
       }
-    } catch (calendarError) {
-      console.error("Failed to create Google Calendar event for booking", {
-        bookingId: booking.id,
-        calendarError,
-      });
     }
 
     try {

@@ -9,6 +9,7 @@ import {
   createGoogleMeetEventForBooking,
   updateGoogleCalendarEventForBooking,
 } from "@/lib/integrations/google-calendar";
+import { canUserAccessFeature } from "@/lib/subscription/access";
 import {
   isPrismaUniqueConstraintError,
   parseJsonBody,
@@ -63,6 +64,18 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     return fail("FORBIDDEN", "You can only modify your own bookings", 403);
   }
 
+  const hasCoreScheduling = await canUserAccessFeature(userId, "CORE_SCHEDULING");
+
+  if (!hasCoreScheduling) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "An active paid subscription is required to manage bookings",
+      402
+    );
+  }
+
+  const canUseGoogleMeet = await canUserAccessFeature(userId, "GOOGLE_CALENDAR_MEET");
+
   try {
     if (parsedBody.data.action === "cancel") {
       const cancelledBooking = await prisma.booking.update({
@@ -75,7 +88,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         },
       });
 
-      if (existingBooking.googleCalendarEventId) {
+      if (canUseGoogleMeet && existingBooking.googleCalendarEventId) {
         try {
           const cancelledInCalendar = await cancelGoogleCalendarEventForBooking({
             hostId: userId,
@@ -150,7 +163,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         meetLink: string | null;
       } | null = null;
 
-      if (existingBooking.googleCalendarEventId) {
+      if (canUseGoogleMeet && existingBooking.googleCalendarEventId) {
         calendarEventResult = await updateGoogleCalendarEventForBooking({
           hostId: userId,
           googleCalendarEventId: existingBooking.googleCalendarEventId,
@@ -196,7 +209,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             }
           }
         }
-      } else {
+      } else if (canUseGoogleMeet) {
         calendarEventResult = await createGoogleMeetEventForBooking({
           bookingId: rescheduledBooking.id,
           hostId: userId,
@@ -230,6 +243,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }
 
       if (
+        canUseGoogleMeet &&
         existingBooking.googleCalendarEventId &&
         calendarEventResult?.eventId &&
         existingBooking.googleCalendarEventId !== calendarEventResult.eventId

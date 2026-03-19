@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
 import { verifyRazorpayPaymentSignature } from "@/lib/payments/razorpay";
+import { canHostAccessFeature } from "@/lib/subscription/access";
 import { verifyRazorpayPaymentBodySchema } from "@/types/api/payments";
 
 export async function POST(request: NextRequest) {
@@ -25,6 +26,16 @@ export async function POST(request: NextRequest) {
 
   if (!payment) {
     return fail("NOT_FOUND", "Payment order not found", 404);
+  }
+
+  const canUsePayments = await canHostAccessFeature(payment.hostId, "PAYMENTS");
+
+  if (!canUsePayments) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "Host must have an active paid subscription to verify payments",
+      402
+    );
   }
 
   if (

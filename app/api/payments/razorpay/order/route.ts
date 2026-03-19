@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
 import { getRazorpayClient, getRazorpayKeyId } from "@/lib/payments/razorpay";
+import { canHostAccessFeature } from "@/lib/subscription/access";
 import { createRazorpayOrderBodySchema } from "@/types/api/payments";
 
 export async function POST(request: NextRequest) {
@@ -27,6 +28,16 @@ export async function POST(request: NextRequest) {
 
   if (!booking) {
     return fail("NOT_FOUND", "Booking not found", 404);
+  }
+
+  const canUsePayments = await canHostAccessFeature(booking.hostId, "PAYMENTS");
+
+  if (!canUsePayments) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "Host must have an active paid subscription to accept payments",
+      402
+    );
   }
 
   if (booking.guestEmail.toLowerCase() !== parsedBody.data.guestEmail.toLowerCase()) {

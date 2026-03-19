@@ -3,6 +3,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
 import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { canUserAccessFeature } from "@/lib/subscription/access";
 import {
   isPrismaUniqueConstraintError,
   parseJsonBody,
@@ -14,6 +15,16 @@ export async function GET() {
 
   if (!userId) {
     return fail("UNAUTHORIZED", "Authentication required", 401);
+  }
+
+  const hasCoreScheduling = await canUserAccessFeature(userId, "CORE_SCHEDULING");
+
+  if (!hasCoreScheduling) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "An active paid subscription is required to access event types",
+      402
+    );
   }
 
   const eventTypes = await prisma.eventType.findMany({
@@ -33,6 +44,16 @@ export async function POST(request: NextRequest) {
 
   if (!userId) {
     return fail("UNAUTHORIZED", "Authentication required", 401);
+  }
+
+  const hasCoreScheduling = await canUserAccessFeature(userId, "CORE_SCHEDULING");
+
+  if (!hasCoreScheduling) {
+    return fail(
+      "PAYMENT_REQUIRED",
+      "An active paid subscription is required to create event types",
+      402
+    );
   }
 
   const parsedBody = await parseJsonBody(request, createEventTypeBodySchema);

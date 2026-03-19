@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { sendBookingLifecycleEmail } from "@/lib/email/resend";
+import { canUserAccessFeature } from "@/lib/subscription/access";
 
 type BookingNotificationType =
   | "BOOKING_CONFIRMATION"
@@ -23,6 +24,19 @@ type SendBookingNotificationInput = {
 export async function createAndSendBookingNotification(
   input: SendBookingNotificationInput
 ) {
+  const canSendNotifications = await canUserAccessFeature(
+    input.userId,
+    "EMAIL_NOTIFICATIONS"
+  );
+
+  if (!canSendNotifications) {
+    return {
+      notificationLogId: null,
+      sent: false,
+      reason: "Email notifications are available on paid plans only",
+    };
+  }
+
   const notificationLog = await prisma.notificationLog.create({
     data: {
       bookingId: input.bookingId,
