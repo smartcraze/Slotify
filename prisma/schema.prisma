@@ -79,7 +79,6 @@ model Booking {
 }
 
 
-
 enum TimeSlotStatus {
   AVAILABLE
   BOOKED
@@ -99,3 +98,5 @@ model AvailableSlot {
 
   @@index([userId, startTime])
 }
+
+
