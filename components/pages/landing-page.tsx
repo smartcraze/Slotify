@@ -4,6 +4,7 @@ import { CalendarCheck2, CalendarDays, LogIn, Sparkles } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { APP_NAME } from "@/data/branding";
 
 type LandingPageProps = {
   isLoggedIn: boolean;
@@ -19,7 +20,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
             <CalendarDays className="size-5" />
-            <span>Cal Clone</span>
+            <span>{APP_NAME}</span>
           </Link>
 
           <div className="flex items-center gap-2">

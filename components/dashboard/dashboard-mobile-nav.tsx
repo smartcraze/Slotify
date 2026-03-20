@@ -9,6 +9,7 @@ import {
   getPublicProfileHref,
   isActivePath,
 } from "@/components/dashboard/nav-items";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -62,6 +63,8 @@ export function DashboardMobileNav(props: DashboardMobileNavProps) {
           <Button asChild variant="outline" className="mt-3 w-full justify-start">
             <Link href={getPublicProfileHref(props.username)}>Public Page</Link>
           </Button>
+
+          <SignOutButton className="w-full justify-start" variant="ghost" />
         </div>
       </SheetContent>
     </Sheet>

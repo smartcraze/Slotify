@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { DashboardMobileNav } from "@/components/dashboard/dashboard-mobile-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ export function DashboardHeader(props: DashboardHeaderProps) {
           <Button asChild variant="outline" className="hidden sm:inline-flex">
             <Link href="/onboarding">Setup</Link>
           </Button>
+          <SignOutButton className="hidden sm:inline-flex" />
         </div>
       </div>
     </header>
