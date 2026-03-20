@@ -29,6 +29,7 @@ export default async function IntegrationsPage() {
 
   return (
     <DashboardPageShell
+      userId={user.id}
       title="Integrations"
       subtitle="Google calendar and notification delivery status"
       username={user.username}

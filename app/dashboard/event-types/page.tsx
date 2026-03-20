@@ -15,6 +15,7 @@ export default async function EventTypesPage() {
 
   return (
     <DashboardPageShell
+      userId={user.id}
       title="Event Types"
       subtitle="Create and manage your public booking types"
       username={user.username}

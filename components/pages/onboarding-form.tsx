@@ -122,8 +122,8 @@ export function OnboardingForm(props: OnboardingFormProps) {
       return;
     }
 
-    toast.success("Setup completed. Redirecting to your public page...");
-    router.push(payload.data.publicProfilePath);
+    toast.success("Setup completed. Next step: connect Google Calendar.");
+    router.push("/dashboard");
   }
 
   return (

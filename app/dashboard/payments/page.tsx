@@ -17,6 +17,7 @@ export default async function PaymentsPage() {
 
   return (
     <DashboardPageShell
+      userId={user.id}
       title="Payments"
       subtitle="Subscription plan and payment records"
       username={user.username}

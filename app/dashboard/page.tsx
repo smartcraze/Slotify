@@ -1,11 +1,12 @@
 import Link from "next/link";
 
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { SetupChecklistCard } from "@/components/dashboard/setup-checklist-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { requireDashboardUser } from "@/lib/dashboard";
+import { getHostSetupStatus, requireDashboardUser } from "@/lib/dashboard";
 import { prisma } from "@/lib/prisma";
 
 function fmt(date: Date) {
@@ -19,7 +20,7 @@ export default async function DashboardPage() {
   const user = await requireDashboardUser();
   const now = new Date();
 
-  const [eventTypeCount, upcomingBookings, availabilityRuleCount] = await Promise.all([
+  const [eventTypeCount, upcomingBookings, availabilityRuleCount, setupStatus] = await Promise.all([
     prisma.eventType.count({ where: { hostId: user.id } }),
     prisma.booking.findMany({
       where: {
@@ -32,15 +33,21 @@ export default async function DashboardPage() {
       take: 6,
     }),
     prisma.availabilityRule.count({ where: { hostId: user.id } }),
+    getHostSetupStatus(user.id),
   ]);
 
   return (
     <DashboardPageShell
+      userId={user.id}
       title="Overview"
       subtitle="Your scheduling workspace at a glance"
       username={user.username}
       subscriptionTier={user.subscriptionTier}
     >
+      <section className="mb-4">
+        <SetupChecklistCard setup={setupStatus} />
+      </section>
+
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Plan" value={user.subscriptionTier} hint={user.subscriptionStatus} />
         <StatCard label="Timezone" value={user.timezone || "UTC"} hint="Host timezone" />

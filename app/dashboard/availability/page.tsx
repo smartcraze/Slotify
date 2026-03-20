@@ -15,6 +15,7 @@ export default async function AvailabilityPage() {
 
   return (
     <DashboardPageShell
+      userId={user.id}
       title="Availability"
       subtitle="Inspect generated slots using your API rules"
       username={user.username}

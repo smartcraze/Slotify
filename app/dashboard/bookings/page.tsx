@@ -21,6 +21,7 @@ export default async function BookingsPage() {
 
   return (
     <DashboardPageShell
+      userId={user.id}
       title="Bookings"
       subtitle="Monitor and manage attendee bookings"
       username={user.username}

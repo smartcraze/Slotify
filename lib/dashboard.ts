@@ -3,6 +3,13 @@ import { redirect } from "next/navigation";
 import { getAuthenticatedUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
+export type HostSetupStatus = {
+  hasUsername: boolean;
+  hasEventType: boolean;
+  hasAvailability: boolean;
+  hasGoogleCalendar: boolean;
+};
+
 export async function requireDashboardUser() {
   const userId = await getAuthenticatedUserId();
 
@@ -34,5 +41,28 @@ export async function requireDashboardUser() {
   return {
     ...user,
     username: user.username,
+  };
+}
+
+export async function getHostSetupStatus(userId: string): Promise<HostSetupStatus> {
+  const [eventTypeCount, availabilityRuleCount, googleAccount, calendarConnection] =
+    await Promise.all([
+      prisma.eventType.count({ where: { hostId: userId } }),
+      prisma.availabilityRule.count({ where: { hostId: userId } }),
+      prisma.account.findFirst({
+        where: { userId, providerId: "google" },
+        select: { id: true },
+      }),
+      prisma.calendarConnection.findFirst({
+        where: { userId, provider: "google", status: "CONNECTED" },
+        select: { id: true },
+      }),
+    ]);
+
+  return {
+    hasUsername: true,
+    hasEventType: eventTypeCount > 0,
+    hasAvailability: availabilityRuleCount > 0,
+    hasGoogleCalendar: Boolean(googleAccount && calendarConnection),
   };
 }
