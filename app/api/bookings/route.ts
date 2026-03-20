@@ -155,6 +155,20 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    const integrationStatus = {
+      calendar: {
+        attempted: canUseGoogleMeet,
+        success: false,
+        message: canUseGoogleMeet
+          ? "Google Meet generation has not completed"
+          : "Host plan does not include Google Meet integration",
+      },
+      email: {
+        sent: false,
+        message: "Email delivery has not completed",
+      },
+    };
+
     if (canUseGoogleMeet) {
       try {
         const calendarEvent = await createGoogleMeetEventForBooking({
@@ -186,8 +200,19 @@ export async function POST(request: NextRequest) {
               eventType: true,
             },
           });
+
+          integrationStatus.calendar.success = Boolean(meetingLink);
+          integrationStatus.calendar.message = meetingLink
+            ? "Google Meet link generated"
+            : "Google Calendar event created, waiting for Meet link";
+        } else {
+          integrationStatus.calendar.success = false;
+          integrationStatus.calendar.message =
+            calendarEvent?.errorMessage ?? "Google Calendar event was not created";
         }
       } catch (calendarError) {
+        integrationStatus.calendar.success = false;
+        integrationStatus.calendar.message = "Failed to create Google Calendar event";
         console.error("Failed to create Google Calendar event for booking", {
           bookingId: booking.id,
           calendarError,
@@ -196,7 +221,7 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-      await createAndSendBookingNotification({
+      const emailResult = await createAndSendBookingNotification({
         bookingId: booking.id,
         userId: parsedBody.data.hostId,
         type: "BOOKING_CONFIRMATION",
@@ -207,14 +232,26 @@ export async function POST(request: NextRequest) {
         meetingLink: booking.meetingLink,
         hostName: eventType.host?.name ?? null,
       });
+
+      integrationStatus.email.sent = emailResult.sent;
+      integrationStatus.email.message =
+        emailResult.reason ?? (emailResult.sent ? "Booking email sent" : "Email delivery failed");
     } catch (notificationError) {
+      integrationStatus.email.sent = false;
+      integrationStatus.email.message = "Failed to send booking confirmation email";
       console.error("Failed to send booking confirmation email", {
         bookingId: booking.id,
         notificationError,
       });
     }
 
-    return ok(booking, 201);
+    return ok(
+      {
+        ...booking,
+        integrationStatus,
+      },
+      201
+    );
   } catch (error) {
     if (isPrismaUniqueConstraintError(error)) {
       return fail(

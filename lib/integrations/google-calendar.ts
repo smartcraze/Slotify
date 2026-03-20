@@ -30,6 +30,8 @@ type CreateGoogleMeetEventResult = {
   eventId: string | null;
   htmlLink: string | null;
   meetLink: string | null;
+  errorCode?: string;
+  errorMessage?: string;
 };
 
 type HostGoogleAccount = {
@@ -42,8 +44,13 @@ type HostGoogleAccount = {
 type GoogleRequestArgs = {
   hostId: string;
   url: string;
-  method: "POST" | "PATCH" | "DELETE";
+  method: "GET" | "POST" | "PATCH" | "DELETE";
   payload?: Record<string, unknown>;
+};
+
+type GoogleRequestResult = {
+  response: Response | null;
+  reason?: "GOOGLE_NOT_CONNECTED" | "TOKEN_UNAVAILABLE";
 };
 
 type GoogleCalendarEventResponse = {
@@ -59,6 +66,12 @@ type GoogleCalendarEventResponse = {
 };
 
 const TOKEN_REFRESH_BUFFER_MS = 60 * 1000;
+
+function sleep(ms: number) {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
 
 function isTokenExpired(expiresAt: Date | null) {
   if (!expiresAt) {
@@ -144,17 +157,23 @@ async function getValidGoogleAccessToken(account: HostGoogleAccount) {
   return refreshGoogleAccessToken(account.id, account.refreshToken);
 }
 
-async function sendGoogleCalendarRequest(args: GoogleRequestArgs) {
+async function sendGoogleCalendarRequest(args: GoogleRequestArgs): Promise<GoogleRequestResult> {
   const account = await getHostGoogleAccount(args.hostId);
 
   if (!account) {
-    return null;
+    return {
+      response: null,
+      reason: "GOOGLE_NOT_CONNECTED",
+    };
   }
 
   const initialAccessToken = await getValidGoogleAccessToken(account);
 
   if (!initialAccessToken) {
-    return null;
+    return {
+      response: null,
+      reason: "TOKEN_UNAVAILABLE",
+    };
   }
 
   const executeWithAccessToken = (accessToken: string) => {
@@ -176,7 +195,7 @@ async function sendGoogleCalendarRequest(args: GoogleRequestArgs) {
   let response = await executeWithAccessToken(initialAccessToken);
 
   if (response.status !== 401 || !account.refreshToken) {
-    return response;
+    return { response };
   }
 
   const refreshedAccessToken = await refreshGoogleAccessToken(
@@ -185,11 +204,46 @@ async function sendGoogleCalendarRequest(args: GoogleRequestArgs) {
   );
 
   if (!refreshedAccessToken) {
-    return response;
+    return { response };
   }
 
   response = await executeWithAccessToken(refreshedAccessToken);
-  return response;
+  return { response };
+}
+
+async function extractGoogleApiErrorMessage(response: Response) {
+  const fallbackMessage = `Google Calendar API error (${response.status})`;
+
+  try {
+    const payload = (await response.json()) as {
+      error?: {
+        message?: string;
+      };
+    };
+
+    return payload.error?.message ?? fallbackMessage;
+  } catch {
+    return fallbackMessage;
+  }
+}
+
+async function getCalendarEvent(args: {
+  hostId: string;
+  googleCalendarEventId: string;
+}) {
+  const requestResult = await sendGoogleCalendarRequest({
+    hostId: args.hostId,
+    url: `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(
+      args.googleCalendarEventId
+    )}?conferenceDataVersion=1`,
+    method: "GET",
+  });
+
+  if (!requestResult.response || !requestResult.response.ok) {
+    return null;
+  }
+
+  return (await requestResult.response.json()) as GoogleCalendarEventResponse;
 }
 
 function buildCalendarPayload(args: {
@@ -273,27 +327,71 @@ export async function createGoogleMeetEventForBooking(
     conferenceRequestId: `booking-${input.bookingId}`,
   });
 
-  const response = await sendGoogleCalendarRequest({
+  const requestResult = await sendGoogleCalendarRequest({
     hostId: input.hostId,
     url: "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all",
     method: "POST",
     payload: calendarPayload,
   });
 
-  if (!response) {
-    return null;
+  if (!requestResult.response) {
+    return {
+      eventId: null,
+      htmlLink: null,
+      meetLink: null,
+      errorCode: requestResult.reason,
+      errorMessage:
+        requestResult.reason === "GOOGLE_NOT_CONNECTED"
+          ? "Google account is not connected"
+          : "Google access token is unavailable",
+    };
   }
 
-  if (!response.ok) {
-    return null;
+  if (!requestResult.response.ok) {
+    return {
+      eventId: null,
+      htmlLink: null,
+      meetLink: null,
+      errorCode: "GOOGLE_API_ERROR",
+      errorMessage: await extractGoogleApiErrorMessage(requestResult.response),
+    };
   }
 
-  const event = (await response.json()) as GoogleCalendarEventResponse;
+  const event = (await requestResult.response.json()) as GoogleCalendarEventResponse;
+  let meetLink = resolveMeetLink(event);
+
+  // Conference data can be returned slightly after event creation; retry briefly.
+  if (!meetLink && event.id) {
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      await sleep(250);
+      const latestEvent = await getCalendarEvent({
+        hostId: input.hostId,
+        googleCalendarEventId: event.id,
+      });
+
+      if (!latestEvent) {
+        continue;
+      }
+
+      meetLink = resolveMeetLink(latestEvent) ?? meetLink;
+
+      if (meetLink) {
+        break;
+      }
+    }
+  }
 
   return {
     eventId: event.id ?? null,
     htmlLink: event.htmlLink ?? null,
-    meetLink: resolveMeetLink(event),
+    meetLink,
+    ...(meetLink
+      ? {}
+      : {
+          errorCode: "MEET_LINK_PENDING",
+          errorMessage:
+            "Google Calendar event was created, but Meet link is not ready yet",
+        }),
   };
 }
 
@@ -312,7 +410,7 @@ export async function updateGoogleCalendarEventForBooking(
     includeMeetConference: false,
   });
 
-  const response = await sendGoogleCalendarRequest({
+  const requestResult = await sendGoogleCalendarRequest({
     hostId: input.hostId,
     url: `https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(
       input.googleCalendarEventId
@@ -321,11 +419,11 @@ export async function updateGoogleCalendarEventForBooking(
     payload: calendarPayload,
   });
 
-  if (!response || !response.ok) {
+  if (!requestResult.response || !requestResult.response.ok) {
     return null;
   }
 
-  const event = (await response.json()) as GoogleCalendarEventResponse;
+  const event = (await requestResult.response.json()) as GoogleCalendarEventResponse;
 
   return {
     eventId: event.id ?? input.googleCalendarEventId,
@@ -346,9 +444,9 @@ export async function cancelGoogleCalendarEventForBooking(input: {
     method: "DELETE",
   });
 
-  if (!response) {
+  if (!response.response) {
     return false;
   }
 
-  return response.ok;
+  return response.response.ok;
 }

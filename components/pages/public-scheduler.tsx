@@ -34,6 +34,17 @@ type BookingConfirmationDetails = {
   guestEmail: string;
   guestNotes: string | null;
   meetingLink: string | null;
+  integrationStatus?: {
+    calendar?: {
+      attempted: boolean;
+      success: boolean;
+      message: string;
+    };
+    email?: {
+      sent: boolean;
+      message: string;
+    };
+  };
 };
 
 function toDateKey(date: Date) {
@@ -158,9 +169,29 @@ export function PublicScheduler(props: PublicSchedulerProps) {
       guestEmail: string;
       guestNotes: string | null;
       meetingLink: string | null;
+      integrationStatus?: {
+        calendar?: {
+          attempted: boolean;
+          success: boolean;
+          message: string;
+        };
+        email?: {
+          sent: boolean;
+          message: string;
+        };
+      };
     };
 
     toast.success("Booking confirmed");
+
+    if (booking.integrationStatus?.calendar?.attempted && !booking.integrationStatus.calendar.success) {
+      toast.warning(booking.integrationStatus.calendar.message);
+    }
+
+    if (booking.integrationStatus?.email && !booking.integrationStatus.email.sent) {
+      toast.warning(booking.integrationStatus.email.message);
+    }
+
     setBookingState("success");
     setConfirmedBooking(booking);
     setStep("success");
@@ -253,6 +284,14 @@ export function PublicScheduler(props: PublicSchedulerProps) {
                 ) : (
                   "Will be sent by email after calendar sync"
                 )}
+              </p>
+              <p>
+                <span className="font-medium">Calendar sync:</span>{" "}
+                {confirmedBooking.integrationStatus?.calendar?.message ?? "Not attempted"}
+              </p>
+              <p>
+                <span className="font-medium">Email delivery:</span>{" "}
+                {confirmedBooking.integrationStatus?.email?.message ?? "Unknown"}
               </p>
               <p>
                 <span className="font-medium">Created at:</span>{" "}
