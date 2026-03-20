@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "bun run --bun next dev",
-    "build": "bun run --bun next build",
-    "start": "bun run --bun next start",
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "db:migrate": "bunx prisma migrate dev",
     "db:push": "bunx prisma db push",
     "db:studio": "bunx prisma studio",

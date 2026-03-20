@@ -47,6 +47,8 @@ type BookingConfirmationDetails = {
   };
 };
 
+const DISPLAY_LOCALE = "en-US";
+
 function toDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -198,14 +200,14 @@ export function PublicScheduler(props: PublicSchedulerProps) {
   }
 
   function formatSlot(value: string) {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
       hour: "2-digit",
       minute: "2-digit",
     }).format(new Date(value));
   }
 
   function formatSelectedDate(value: Date) {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -214,7 +216,7 @@ export function PublicScheduler(props: PublicSchedulerProps) {
   }
 
   function formatFullDateTime(value: string) {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
       weekday: "long",
       month: "long",
       day: "numeric",
@@ -464,7 +466,7 @@ export function PublicScheduler(props: PublicSchedulerProps) {
 
         <section className="space-y-3 border-b p-6 lg:border-b-0 lg:border-r">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-medium">{new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(selectedDate)}</h2>
+            <h2 className="text-lg font-medium">{new Intl.DateTimeFormat(DISPLAY_LOCALE, { month: "long", year: "numeric" }).format(selectedDate)}</h2>
             <p className="text-xs text-muted-foreground">Select date</p>
           </div>
 
@@ -483,7 +485,7 @@ export function PublicScheduler(props: PublicSchedulerProps) {
         <section className="space-y-3 p-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-medium">
-              {new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric" }).format(selectedDate)}
+              {new Intl.DateTimeFormat(DISPLAY_LOCALE, { weekday: "short", day: "numeric" }).format(selectedDate)}
             </h2>
             <div className="rounded-md border px-2 py-1 text-xs text-muted-foreground">{dateKey}</div>
           </div>
