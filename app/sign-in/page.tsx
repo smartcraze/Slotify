@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { KeyRound, Mail } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,7 +60,21 @@ export default function SignInPage() {
   async function onGoogleSignIn() {
     setErrorMessage(null);
     setLoading("google");
-    await signIn("google", { callbackUrl });
+    toast.info("Redirecting to Google...");
+
+    const result = await signIn("google", {
+      callbackUrl,
+      redirect: false,
+    });
+
+    if (!result || result.error) {
+      setErrorMessage("Unable to start Google sign-in");
+      toast.error("Unable to start Google sign-in");
+      setLoading(null);
+      return;
+    }
+
+    router.push(result.url ?? `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
   async function onCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
@@ -77,11 +92,13 @@ export default function SignInPage() {
 
     if (!result || result.error) {
       setErrorMessage("Invalid email or password");
+      toast.error("Sign-in failed. Check your credentials.");
       setLoading(null);
       return;
     }
 
-    router.replace(callbackUrl);
+    toast.success("Sign-in successful. Redirecting...");
+    router.push(result.url || callbackUrl);
   }
 
   return (

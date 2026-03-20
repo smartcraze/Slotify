@@ -2,6 +2,7 @@
 
 import { FormEvent, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -116,10 +117,12 @@ export function OnboardingForm(props: OnboardingFormProps) {
 
     if (!response.ok || !payload?.success || !payload.data) {
       setErrorMessage(payload?.error?.message ?? "Failed to finish onboarding");
+      toast.error(payload?.error?.message ?? "Failed to finish onboarding");
       setIsSubmitting(false);
       return;
     }
 
+    toast.success("Setup completed. Redirecting to your public page...");
     router.push(payload.data.publicProfilePath);
   }
 

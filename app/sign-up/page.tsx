@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { KeyRound, Mail, UserRound } from "lucide-react";
 import { signIn } from "next-auth/react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -69,7 +70,21 @@ export default function SignUpPage() {
   async function onGoogleSignUp() {
     setErrorMessage(null);
     setLoading("google");
-    await signIn("google", { callbackUrl });
+    toast.info("Redirecting to Google...");
+
+    const result = await signIn("google", {
+      callbackUrl,
+      redirect: false,
+    });
+
+    if (!result || result.error) {
+      setErrorMessage("Unable to start Google sign-up");
+      toast.error("Unable to start Google sign-up");
+      setLoading(null);
+      return;
+    }
+
+    router.push(result.url ?? `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
   async function onManualSignUp(event: FormEvent<HTMLFormElement>) {
@@ -94,6 +109,7 @@ export default function SignUpPage() {
     if (!response.ok) {
       const payload = (await response.json().catch(() => null)) as ApiErrorPayload | null;
       setErrorMessage(payload?.error?.message ?? "Unable to create your account");
+      toast.error(payload?.error?.message ?? "Unable to create your account");
       setLoading(null);
       return;
     }
@@ -107,11 +123,13 @@ export default function SignUpPage() {
 
     if (!signInResult || signInResult.error) {
       setErrorMessage("Account created, but automatic sign-in failed. Please sign in manually.");
+      toast.error("Account created. Please sign in manually.");
       setLoading(null);
       return;
     }
 
-    router.replace(callbackUrl);
+    toast.success("Account created. Redirecting...");
+    router.push(signInResult.url || callbackUrl);
   }
 
   return (

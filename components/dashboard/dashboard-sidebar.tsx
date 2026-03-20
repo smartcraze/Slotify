@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,12 +12,13 @@ import {
 } from "@/components/dashboard/nav-items";
 
 type DashboardSidebarProps = {
-  pathname: string;
   username: string;
   subscriptionTier: string;
 };
 
 export function DashboardSidebar(props: DashboardSidebarProps) {
+  const pathname = usePathname();
+
   return (
     <aside className="hidden w-64 shrink-0 border-r p-4 lg:block">
       <div className="mb-6 space-y-1">
@@ -24,7 +28,7 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
 
       <nav className="space-y-1">
         {DASHBOARD_NAV_ITEMS.map((item) => {
-          const active = isActivePath(props.pathname, item.href);
+          const active = isActivePath(pathname, item.href);
           const Icon = item.icon;
 
           return (
