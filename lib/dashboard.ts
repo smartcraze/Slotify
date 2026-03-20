@@ -45,16 +45,12 @@ export async function requireDashboardUser() {
 }
 
 export async function getHostSetupStatus(userId: string): Promise<HostSetupStatus> {
-  const [eventTypeCount, availabilityRuleCount, googleAccount, calendarConnection] =
+  const [eventTypeCount, availabilityRuleCount, googleAccount] =
     await Promise.all([
       prisma.eventType.count({ where: { hostId: userId } }),
       prisma.availabilityRule.count({ where: { hostId: userId } }),
       prisma.account.findFirst({
         where: { userId, providerId: "google" },
-        select: { id: true },
-      }),
-      prisma.calendarConnection.findFirst({
-        where: { userId, provider: "google", status: "CONNECTED" },
         select: { id: true },
       }),
     ]);
@@ -63,6 +59,6 @@ export async function getHostSetupStatus(userId: string): Promise<HostSetupStatu
     hasUsername: true,
     hasEventType: eventTypeCount > 0,
     hasAvailability: availabilityRuleCount > 0,
-    hasGoogleCalendar: Boolean(googleAccount && calendarConnection),
+    hasGoogleCalendar: Boolean(googleAccount),
   };
 }

@@ -37,11 +37,11 @@ function GoogleLogo() {
 
 function resolveCallbackUrl(rawCallbackUrl: string | null) {
   if (!rawCallbackUrl) {
-    return "/onboarding";
+    return "/dashboard";
   }
 
   if (!rawCallbackUrl.startsWith("/")) {
-    return "/onboarding";
+    return "/dashboard";
   }
 
   return rawCallbackUrl;

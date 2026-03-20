@@ -43,7 +43,9 @@ export default async function IntegrationsPage() {
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             <p>Account linked: {googleAccount ? "Yes" : "No"}</p>
-            <p>Calendar connection: {calendarConnection?.status || "Not connected"}</p>
+            <p>
+              Calendar connection: {calendarConnection?.status || (googleAccount ? "Connected via OAuth" : "Not connected")}
+            </p>
             <p>Last sync: {calendarConnection?.lastSyncAt?.toLocaleString() || "N/A"}</p>
             {googleAccount ? <Badge>Connected</Badge> : <Badge variant="secondary">Disconnected</Badge>}
 

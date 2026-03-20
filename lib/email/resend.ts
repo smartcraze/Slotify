@@ -24,6 +24,11 @@ type SendBookingEmailResult = {
   error: { message: string } | null;
 };
 
+type EmailAttachment = {
+  filename: string;
+  content: string;
+};
+
 const resendApiKey = process.env.RESEND_API_KEY;
 const resendFromEmail = process.env.RESEND_FROM_EMAIL;
 
@@ -107,6 +112,58 @@ function buildHtmlBody(payload: BookingEmailPayload) {
   ].join("");
 }
 
+function escapeIcsText(value: string) {
+  return value
+    .replace(/\\/g, "\\\\")
+    .replace(/;/g, "\\;")
+    .replace(/,/g, "\\,")
+    .replace(/\n/g, "\\n");
+}
+
+function formatIcsDate(date: Date) {
+  return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
+}
+
+function buildCalendarInviteAttachment(payload: BookingEmailPayload): EmailAttachment | null {
+  if (
+    payload.notificationType !== "BOOKING_CONFIRMATION" &&
+    payload.notificationType !== "BOOKING_RESCHEDULED"
+  ) {
+    return null;
+  }
+
+  const summary = escapeIcsText(payload.eventTypeName);
+  const description = escapeIcsText(
+    payload.meetingLink ? `Meeting link: ${payload.meetingLink}` : "Meeting link: Not available yet"
+  );
+  const organizerName = escapeIcsText(payload.hostName || "Calendar host");
+
+  const ics = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Slotify//Booking Invite//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:REQUEST",
+    "BEGIN:VEVENT",
+    `UID:${payload.bookingId}@slotify`,
+    `DTSTAMP:${formatIcsDate(new Date())}`,
+    `DTSTART:${formatIcsDate(payload.startTimeUtc)}`,
+    `DTEND:${formatIcsDate(payload.endTimeUtc)}`,
+    `SUMMARY:${summary}`,
+    `DESCRIPTION:${description}`,
+    `ORGANIZER;CN=${organizerName}:mailto:no-reply@slotify.app`,
+    `ATTENDEE;CN=${escapeIcsText(payload.to)};RSVP=TRUE:mailto:${payload.to}`,
+    "END:VEVENT",
+    "END:VCALENDAR",
+    "",
+  ].join("\r\n");
+
+  return {
+    filename: `slotify-booking-${payload.bookingId}.ics`,
+    content: Buffer.from(ics, "utf-8").toString("base64"),
+  };
+}
+
 export function verifyResendWebhookSignature(args: {
   payload: string;
   headers: {
@@ -149,6 +206,8 @@ export async function sendBookingLifecycleEmail(
     };
   }
 
+  const inviteAttachment = buildCalendarInviteAttachment(payload);
+
   const { data, error } = await resend.emails.send(
     {
       from: resendFromEmail,
@@ -156,6 +215,7 @@ export async function sendBookingLifecycleEmail(
       subject: getSubject(payload.notificationType, payload.eventTypeName),
       text: buildTextBody(payload),
       html: buildHtmlBody(payload),
+      attachments: inviteAttachment ? [inviteAttachment] : undefined,
       tags: [
         { name: "notification_log_id", value: payload.notificationLogId },
         { name: "booking_id", value: payload.bookingId },

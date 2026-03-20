@@ -48,6 +48,7 @@ function slugify(value: string) {
 
 export function OnboardingForm(props: OnboardingFormProps) {
   const router = useRouter();
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   const [name, setName] = useState(props.defaultName);
   const [username, setUsername] = useState(props.defaultUsername);
@@ -126,6 +127,11 @@ export function OnboardingForm(props: OnboardingFormProps) {
     router.push("/dashboard");
   }
 
+  const canContinueStepOne = username.trim().length >= 3;
+  const canContinueStepTwo =
+    eventTypeName.trim().length > 0 && eventTypeSlug.trim().length >= 3;
+  const canSubmit = availabilityDays.length > 0;
+
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-6">
       <Card>
@@ -138,6 +144,18 @@ export function OnboardingForm(props: OnboardingFormProps) {
 
         <CardContent>
           <form className="space-y-8" onSubmit={onSubmit}>
+            <div className="rounded-md border bg-muted/40 p-3 text-sm">
+              <p className="font-medium">Step {step} of 3</p>
+              <p className="text-xs text-muted-foreground">
+                {step === 1
+                  ? "Profile"
+                  : step === 2
+                    ? "Event type"
+                    : "Availability"}
+              </p>
+            </div>
+
+            {step === 1 ? (
             <section className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="name">Display name</Label>
@@ -183,7 +201,9 @@ export function OnboardingForm(props: OnboardingFormProps) {
                 />
               </div>
             </section>
+            ) : null}
 
+            {step === 2 ? (
             <section className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="eventTypeName">Meeting title</Label>
@@ -231,7 +251,9 @@ export function OnboardingForm(props: OnboardingFormProps) {
                 />
               </div>
             </section>
+            ) : null}
 
+            {step === 3 ? (
             <section className="space-y-4">
               <div>
                 <p className="text-sm font-medium">Weekly availability</p>
@@ -280,12 +302,35 @@ export function OnboardingForm(props: OnboardingFormProps) {
                 </div>
               </div>
             </section>
+            ) : null}
 
             {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
 
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Saving..." : "Finish setup"}
-            </Button>
+            <div className="flex items-center gap-2">
+              {step > 1 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setStep((current) => (current === 1 ? current : ((current - 1) as 1 | 2 | 3)))}
+                >
+                  Back
+                </Button>
+              ) : null}
+
+              {step < 3 ? (
+                <Button
+                  type="button"
+                  onClick={() => setStep((current) => (current === 3 ? current : ((current + 1) as 1 | 2 | 3)))}
+                  disabled={step === 1 ? !canContinueStepOne : !canContinueStepTwo}
+                >
+                  Continue
+                </Button>
+              ) : (
+                <Button type="submit" disabled={isSubmitting || !canSubmit}>
+                  {isSubmitting ? "Saving..." : "Finish setup"}
+                </Button>
+              )}
+            </div>
           </form>
         </CardContent>
       </Card>
