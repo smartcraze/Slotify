@@ -3,13 +3,21 @@
 import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { KeyRound, Mail } from "lucide-react";
+import { KeyRound, Mail, UserRound } from "lucide-react";
 import { signIn } from "next-auth/react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+type ApiErrorPayload = {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+  };
+};
 
 function GoogleLogo() {
   return (
@@ -46,37 +54,59 @@ function resolveCallbackUrl(rawCallbackUrl: string | null) {
   return rawCallbackUrl;
 }
 
-export default function SignInPage() {
+export default function SignUpPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = resolveCallbackUrl(searchParams.get("callbackUrl"));
 
+  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState<"google" | "credentials" | null>(null);
+  const [loading, setLoading] = useState<"google" | "manual" | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  async function onGoogleSignIn() {
+  async function onGoogleSignUp() {
     setErrorMessage(null);
     setLoading("google");
     await signIn("google", { callbackUrl });
   }
 
-  async function onCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
+  async function onManualSignUp(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setErrorMessage(null);
-    setLoading("credentials");
+    setLoading("manual");
 
-    const result = await signIn("credentials", {
+    const response = await fetch("/api/auth/signup", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email,
+        password,
+        name: name || undefined,
+        username: username || undefined,
+      }),
+    });
+
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => null)) as ApiErrorPayload | null;
+      setErrorMessage(payload?.error?.message ?? "Unable to create your account");
+      setLoading(null);
+      return;
+    }
+
+    const signInResult = await signIn("credentials", {
       email,
       password,
       callbackUrl,
       redirect: false,
     });
 
-    if (!result || result.error) {
-      setErrorMessage("Invalid email or password");
+    if (!signInResult || signInResult.error) {
+      setErrorMessage("Account created, but automatic sign-in failed. Please sign in manually.");
       setLoading(null);
       return;
     }
@@ -88,9 +118,9 @@ export default function SignInPage() {
     <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-4 py-10">
       <Card className="w-full">
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
+          <CardTitle>Create account</CardTitle>
           <CardDescription>
-            Continue with Google or use email and password.
+            Sign up with email/password or use Google for calendar-connected scheduling.
           </CardDescription>
         </CardHeader>
 
@@ -98,14 +128,40 @@ export default function SignInPage() {
           <Button
             type="button"
             className="w-full"
-            onClick={onGoogleSignIn}
+            onClick={onGoogleSignUp}
             disabled={loading !== null}
           >
             <GoogleLogo />
             Continue with Google
           </Button>
 
-          <form className="space-y-4" onSubmit={onCredentialsSignIn}>
+          <form className="space-y-4" onSubmit={onManualSignUp}>
+            <div className="space-y-2">
+              <Label htmlFor="name">Name (optional)</Label>
+              <div className="relative">
+                <UserRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
+                  placeholder="Your name"
+                  className="pl-9"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="username">Username (optional)</Label>
+              <Input
+                id="username"
+                value={username}
+                onChange={(event) => setUsername(event.target.value.toLowerCase())}
+                placeholder="your-name"
+                pattern="^[a-z0-9-]{3,32}$"
+                title="Use 3-32 lowercase letters, numbers, or hyphens"
+              />
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
@@ -131,7 +187,8 @@ export default function SignInPage() {
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Your password"
+                  placeholder="At least 8 characters"
+                  minLength={8}
                   className="pl-9"
                   required
                 />
@@ -141,23 +198,15 @@ export default function SignInPage() {
             {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
 
             <Button type="submit" variant="outline" className="w-full" disabled={loading !== null}>
-              Sign in with email
+              Create account
             </Button>
           </form>
 
           <p className="text-xs text-muted-foreground">
-            New users can start with Google and complete profile setup after sign-in.
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            Need an account?{" "}
-            <Link href="/sign-up" className="underline underline-offset-4">
-              Create one
+            Already have an account?{" "}
+            <Link href="/sign-in" className="underline underline-offset-4">
+              Sign in
             </Link>
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            Back to <Link href="/" className="underline underline-offset-4">home</Link>
           </p>
         </CardContent>
       </Card>

@@ -9,16 +9,6 @@ import { getAuthenticatedUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { onboardingCompleteBodySchema } from "@/types/api/onboarding";
 
-const DEFAULT_EVENT_SLUG = "intro-call";
-
-const DEFAULT_RULES = [
-  { dayOfWeek: 1, startTime: "09:00", endTime: "17:00" },
-  { dayOfWeek: 2, startTime: "09:00", endTime: "17:00" },
-  { dayOfWeek: 3, startTime: "09:00", endTime: "17:00" },
-  { dayOfWeek: 4, startTime: "09:00", endTime: "17:00" },
-  { dayOfWeek: 5, startTime: "09:00", endTime: "17:00" },
-];
-
 export async function POST(request: NextRequest) {
   const userId = await getAuthenticatedUserId();
 
@@ -56,10 +46,11 @@ export async function POST(request: NextRequest) {
         await tx.eventType.create({
           data: {
             hostId: userId,
-            name: "30-min Intro",
-            slug: DEFAULT_EVENT_SLUG,
-            description: "A short introduction call",
-            duration: 30,
+            name: parsedBody.data.eventTypeName,
+            slug: parsedBody.data.eventTypeSlug,
+            description:
+              parsedBody.data.eventTypeDescription || "A short introduction call",
+            duration: parsedBody.data.eventDurationMinutes,
             status: "ACTIVE",
             isPublic: true,
           },
@@ -68,11 +59,11 @@ export async function POST(request: NextRequest) {
 
       if (availabilityCount === 0) {
         await tx.availabilityRule.createMany({
-          data: DEFAULT_RULES.map((rule) => ({
+          data: parsedBody.data.availabilityDays.map((dayOfWeek) => ({
             hostId: userId,
-            dayOfWeek: rule.dayOfWeek,
-            startTime: rule.startTime,
-            endTime: rule.endTime,
+            dayOfWeek,
+            startTime: parsedBody.data.availabilityStartTime,
+            endTime: parsedBody.data.availabilityEndTime,
             isRecurring: true,
           })),
           skipDuplicates: true,
@@ -86,7 +77,7 @@ export async function POST(request: NextRequest) {
 
     return ok({
       username: result.username,
-      publicProfilePath: `/@${result.username}`,
+      publicProfilePath: `/${result.username}`,
     });
   } catch (error) {
     if (isPrismaUniqueConstraintError(error)) {
