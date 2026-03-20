@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { AppFooter } from "@/components/layout/app-footer";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_DESCRIPTION, APP_NAME } from "@/data/branding";
@@ -36,7 +37,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
-          {children}
+          <div className="flex-1">{children}</div>
+          <AppFooter />
           <Toaster richColors closeButton />
         </ThemeProvider>
       </body>
