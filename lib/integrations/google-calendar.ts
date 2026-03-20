@@ -36,7 +36,7 @@ type HostGoogleAccount = {
   id: string;
   accessToken: string | null;
   refreshToken: string | null;
-  accessTokenExpires: Date | null;
+  accessTokenExpiresAt: Date | null;
 };
 
 type GoogleRequestArgs = {
@@ -78,7 +78,7 @@ async function getHostGoogleAccount(hostId: string): Promise<HostGoogleAccount |
       id: true,
       accessToken: true,
       refreshToken: true,
-      accessTokenExpires: true,
+      accessTokenExpiresAt: true,
     },
   });
 }
@@ -125,7 +125,7 @@ async function refreshGoogleAccessToken(accountId: string, refreshToken: string)
     where: { id: accountId },
     data: {
       accessToken: tokenData.access_token,
-      accessTokenExpires: nextExpiry,
+      accessTokenExpiresAt: nextExpiry,
     },
   });
 
@@ -133,7 +133,7 @@ async function refreshGoogleAccessToken(accountId: string, refreshToken: string)
 }
 
 async function getValidGoogleAccessToken(account: HostGoogleAccount) {
-  if (account.accessToken && !isTokenExpired(account.accessTokenExpires)) {
+  if (account.accessToken && !isTokenExpired(account.accessTokenExpiresAt)) {
     return account.accessToken;
   }
 

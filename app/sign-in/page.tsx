@@ -51,6 +51,7 @@ export default function SignInPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = resolveCallbackUrl(searchParams.get("callbackUrl"));
+  const isGoogleLinkMode = searchParams.get("mode") === "link-google";
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -104,7 +105,9 @@ export default function SignInPage() {
         <CardHeader>
           <CardTitle>Sign in</CardTitle>
           <CardDescription>
-            Continue with Google or use email and password.
+            {isGoogleLinkMode
+              ? "Connect your Google account to enable Google Meet link generation."
+              : "Continue with Google or use email and password."}
           </CardDescription>
         </CardHeader>
 

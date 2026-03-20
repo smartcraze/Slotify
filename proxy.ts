@@ -9,11 +9,13 @@ function buildSignInRedirect(request: NextRequest) {
 export function proxy(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthenticated = Boolean(getSessionCookie(request));
+  const authMode = request.nextUrl.searchParams.get("mode");
+  const isGoogleLinkMode = authMode === "link-google";
 
   const isAuthPage = pathname === "/sign-in" || pathname === "/sign-up";
   const isProtectedPage = pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding");
 
-  if (isAuthPage && isAuthenticated) {
+  if (isAuthPage && isAuthenticated && !isGoogleLinkMode) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 

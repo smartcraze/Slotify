@@ -1,5 +1,8 @@
+import Link from "next/link";
+
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireDashboardUser } from "@/lib/dashboard";
 import { prisma } from "@/lib/prisma";
@@ -42,6 +45,19 @@ export default async function IntegrationsPage() {
             <p>Calendar connection: {calendarConnection?.status || "Not connected"}</p>
             <p>Last sync: {calendarConnection?.lastSyncAt?.toLocaleString() || "N/A"}</p>
             {googleAccount ? <Badge>Connected</Badge> : <Badge variant="secondary">Disconnected</Badge>}
+
+            {!googleAccount ? (
+              <div className="mt-3 space-y-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-amber-950">
+                <p className="text-xs font-medium">
+                  Google Meet links require a connected Google account with Calendar access.
+                </p>
+                <Button asChild size="sm" className="w-full sm:w-auto">
+                  <Link href="/sign-in?mode=link-google&callbackUrl=%2Fdashboard%2Fintegrations">
+                    Connect Google Calendar
+                  </Link>
+                </Button>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

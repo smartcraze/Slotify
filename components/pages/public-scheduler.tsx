@@ -2,6 +2,7 @@
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock3, Globe, Video } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,6 +24,18 @@ type PublicSchedulerProps = {
   eventDurationMinutes: number;
 };
 
+type BookingConfirmationDetails = {
+  id: string;
+  status: string;
+  createdAt: string;
+  startTimeUtc: string;
+  endTimeUtc: string;
+  guestName: string | null;
+  guestEmail: string;
+  guestNotes: string | null;
+  meetingLink: string | null;
+};
+
 function toDateKey(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -32,7 +45,7 @@ function toDateKey(date: Date) {
 
 export function PublicScheduler(props: PublicSchedulerProps) {
   const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [step, setStep] = useState<"slots" | "details">("slots");
+  const [step, setStep] = useState<"slots" | "details" | "success">("slots");
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotError, setSlotError] = useState<string | null>(null);
@@ -42,6 +55,9 @@ export function PublicScheduler(props: PublicSchedulerProps) {
   const [guestNotes, setGuestNotes] = useState("");
   const [bookingState, setBookingState] = useState<"idle" | "submitting" | "success">("idle");
   const [bookingError, setBookingError] = useState<string | null>(null);
+  const [confirmedBooking, setConfirmedBooking] = useState<BookingConfirmationDetails | null>(
+    null
+  );
 
   const attendeeTimezone = useMemo(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
@@ -62,6 +78,7 @@ export function PublicScheduler(props: PublicSchedulerProps) {
     setActiveSlot(null);
     setBookingState("idle");
     setBookingError(null);
+    setConfirmedBooking(null);
 
     const query = new URLSearchParams({
       hostId: props.hostId,
@@ -126,17 +143,27 @@ export function PublicScheduler(props: PublicSchedulerProps) {
 
     if (!response.ok || !payload?.success) {
       setBookingError(payload?.error?.message ?? "Failed to create booking");
+      toast.error(payload?.error?.message ?? "Failed to create booking");
       setBookingState("idle");
       return;
     }
 
+    const booking = payload.data as {
+      id: string;
+      status: string;
+      createdAt: string;
+      startTimeUtc: string;
+      endTimeUtc: string;
+      guestName: string | null;
+      guestEmail: string;
+      guestNotes: string | null;
+      meetingLink: string | null;
+    };
+
+    toast.success("Booking confirmed");
     setBookingState("success");
-    setActiveSlot(null);
-    setGuestName("");
-    setGuestEmail("");
-    setGuestNotes("");
-    await loadSlots(selectedDate);
-    setStep("slots");
+    setConfirmedBooking(booking);
+    setStep("success");
   }
 
   function formatSlot(value: string) {
@@ -155,6 +182,18 @@ export function PublicScheduler(props: PublicSchedulerProps) {
     }).format(value);
   }
 
+  function formatFullDateTime(value: string) {
+    return new Intl.DateTimeFormat(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    }).format(new Date(value));
+  }
+
   function onSelectSlot(slot: AvailabilitySlot) {
     setActiveSlot(slot);
   }
@@ -169,6 +208,87 @@ export function PublicScheduler(props: PublicSchedulerProps) {
 
   const hostInitial = props.hostName.trim().charAt(0).toUpperCase() || "H";
 
+  if (step === "success" && confirmedBooking) {
+    return (
+      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mx-auto grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
+          <section className="space-y-4 border-b p-6 md:border-b-0 md:border-r">
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Step 3 of 3
+            </p>
+
+            <h1 className="text-3xl font-semibold">Booking Confirmed</h1>
+
+            <p className="text-sm text-muted-foreground">
+              Your meeting request has been confirmed and added to the host schedule.
+            </p>
+          </section>
+
+          <section className="space-y-4 p-6">
+            <div className="space-y-3 rounded-lg border bg-background p-4 text-sm">
+              <p><span className="font-medium">Booking ID:</span> {confirmedBooking.id}</p>
+              <p><span className="font-medium">Status:</span> {confirmedBooking.status}</p>
+              <p>
+                <span className="font-medium">With whom:</span> {props.hostName}
+                {confirmedBooking.guestName ? ` and ${confirmedBooking.guestName}` : ""}
+              </p>
+              <p><span className="font-medium">Guest email:</span> {confirmedBooking.guestEmail}</p>
+              <p><span className="font-medium">When:</span> {formatFullDateTime(confirmedBooking.startTimeUtc)}</p>
+              <p><span className="font-medium">Ends:</span> {formatFullDateTime(confirmedBooking.endTimeUtc)}</p>
+              <p><span className="font-medium">Host timezone:</span> {props.hostTimezone}</p>
+              <p><span className="font-medium">Your timezone:</span> {attendeeTimezone}</p>
+              <p><span className="font-medium">Where:</span> Google Meet</p>
+              <p><span className="font-medium">Platform:</span> Google Calendar + Google Meet</p>
+              <p>
+                <span className="font-medium">Meeting link:</span>{" "}
+                {confirmedBooking.meetingLink ? (
+                  <a
+                    href={confirmedBooking.meetingLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-primary underline"
+                  >
+                    Join meeting
+                  </a>
+                ) : (
+                  "Will be sent by email after calendar sync"
+                )}
+              </p>
+              <p>
+                <span className="font-medium">Created at:</span>{" "}
+                {formatFullDateTime(confirmedBooking.createdAt)}
+              </p>
+              <p>
+                <span className="font-medium">Notes:</span>{" "}
+                {confirmedBooking.guestNotes || "No additional notes"}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={async () => {
+                  setStep("slots");
+                  setActiveSlot(null);
+                  setGuestName("");
+                  setGuestEmail("");
+                  setGuestNotes("");
+                  setBookingState("idle");
+                  setBookingError(null);
+                  setConfirmedBooking(null);
+                  await loadSlots(selectedDate);
+                }}
+              >
+                Book another slot
+              </Button>
+            </div>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   if (step === "details" && activeSlot) {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
@@ -182,6 +302,10 @@ export function PublicScheduler(props: PublicSchedulerProps) {
             </div>
 
             <h1 className="text-3xl font-semibold">{props.eventTypeName}</h1>
+
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              Step 2 of 3
+            </p>
 
             <div className="space-y-2 text-sm text-muted-foreground">
               <p className="flex items-center gap-2">
@@ -204,12 +328,6 @@ export function PublicScheduler(props: PublicSchedulerProps) {
           </section>
 
           <section className="space-y-4 p-6">
-            {bookingState === "success" ? (
-              <div className="rounded-md border bg-background p-3 text-sm">
-                Booking confirmed. Check your email for details.
-              </div>
-            ) : null}
-
             <form className="space-y-4" onSubmit={onBookSlot}>
               <div className="space-y-2">
                 <label className="text-sm font-medium" htmlFor="guestName">
@@ -282,6 +400,10 @@ export function PublicScheduler(props: PublicSchedulerProps) {
             <p className="text-sm text-muted-foreground">{props.hostName}</p>
           </div>
           <h1 className="text-4xl font-semibold leading-tight">{props.eventTypeName}</h1>
+
+          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+            Step 1 of 3
+          </p>
 
           <div className="space-y-2 text-sm text-muted-foreground">
             <p className="flex items-center gap-2">
