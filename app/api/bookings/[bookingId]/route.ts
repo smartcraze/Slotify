@@ -74,7 +74,10 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
     );
   }
 
-  const canUseGoogleMeet = await canUserAccessFeature(userId, "GOOGLE_CALENDAR_MEET");
+  const linkedGoogleAccount = await prisma.account.findFirst({
+    where: { userId, providerId: "google" },
+    select: { id: true },
+  });
 
   try {
     if (parsedBody.data.action === "cancel") {
@@ -88,7 +91,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         },
       });
 
-      if (canUseGoogleMeet && existingBooking.googleCalendarEventId) {
+      if (linkedGoogleAccount && existingBooking.googleCalendarEventId) {
         try {
           const cancelledInCalendar = await cancelGoogleCalendarEventForBooking({
             hostId: userId,
@@ -163,7 +166,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
         meetLink: string | null;
       } | null = null;
 
-      if (canUseGoogleMeet && existingBooking.googleCalendarEventId) {
+      if (linkedGoogleAccount && existingBooking.googleCalendarEventId) {
         calendarEventResult = await updateGoogleCalendarEventForBooking({
           hostId: userId,
           googleCalendarEventId: existingBooking.googleCalendarEventId,
@@ -209,7 +212,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
             }
           }
         }
-      } else if (canUseGoogleMeet) {
+      } else if (linkedGoogleAccount) {
         calendarEventResult = await createGoogleMeetEventForBooking({
           bookingId: rescheduledBooking.id,
           hostId: userId,
@@ -243,7 +246,7 @@ export async function PATCH(request: NextRequest, context: RouteContext) {
       }
 
       if (
-        canUseGoogleMeet &&
+        linkedGoogleAccount &&
         existingBooking.googleCalendarEventId &&
         calendarEventResult?.eventId &&
         existingBooking.googleCalendarEventId !== calendarEventResult.eventId

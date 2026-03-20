@@ -29,7 +29,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     monthlyPriceInr: 0,
     yearlyPriceInr: 0,
     description: "Limited scheduling with basic booking workflows",
-    features: ["CORE_SCHEDULING"],
+    features: ["CORE_SCHEDULING", "GOOGLE_CALENDAR_MEET"],
   },
   {
     tier: "STARTER",
@@ -37,7 +37,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     monthlyPriceInr: 499,
     yearlyPriceInr: 4990,
     description: "Core scheduling for individual hosts",
-    features: ["CORE_SCHEDULING", "PAYMENTS"],
+    features: ["CORE_SCHEDULING", "GOOGLE_CALENDAR_MEET", "PAYMENTS"],
   },
   {
     tier: "PRO",
@@ -69,7 +69,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
 
 export const FEATURE_MINIMUM_TIER: Record<SubscriptionFeatureKey, SubscriptionTier> = {
   CORE_SCHEDULING: "FREE",
-  GOOGLE_CALENDAR_MEET: "PRO",
+  GOOGLE_CALENDAR_MEET: "FREE",
   EMAIL_NOTIFICATIONS: "PRO",
   PAYMENTS: "STARTER",
 };

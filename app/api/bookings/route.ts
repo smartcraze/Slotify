@@ -5,7 +5,7 @@ import { fail, ok } from "@/lib/api/response";
 import { getAuthenticatedUserId } from "@/lib/auth/session";
 import { createAndSendBookingNotification } from "@/lib/notifications/booking-email";
 import { createGoogleMeetEventForBooking } from "@/lib/integrations/google-calendar";
-import { canHostAccessFeature, canUserAccessFeature } from "@/lib/subscription/access";
+import { canUserAccessFeature } from "@/lib/subscription/access";
 import {
   isPrismaUniqueConstraintError,
   parseJsonBody,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     return fail("BAD_REQUEST", "Invalid request body", 400, parsedBody.details);
   }
 
-  const hasCoreScheduling = await canHostAccessFeature(
+  const hasCoreScheduling = await canUserAccessFeature(
     parsedBody.data.hostId,
     "CORE_SCHEDULING"
   );
@@ -92,10 +92,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const canUseGoogleMeet = await canHostAccessFeature(
-    parsedBody.data.hostId,
-    "GOOGLE_CALENDAR_MEET"
-  );
+  const linkedGoogleAccount = await prisma.account.findFirst({
+    where: { userId: parsedBody.data.hostId, providerId: "google" },
+    select: { id: true },
+  });
 
   const eventType = await prisma.eventType.findFirst({
     where: {
@@ -157,11 +157,11 @@ export async function POST(request: NextRequest) {
 
     const integrationStatus = {
       calendar: {
-        attempted: canUseGoogleMeet,
+        attempted: Boolean(linkedGoogleAccount),
         success: false,
-        message: canUseGoogleMeet
+        message: linkedGoogleAccount
           ? "Google Meet generation has not completed"
-          : "Host plan does not include Google Meet integration",
+          : "Host has not connected Google Calendar",
       },
       email: {
         sent: false,
@@ -169,7 +169,7 @@ export async function POST(request: NextRequest) {
       },
     };
 
-    if (canUseGoogleMeet) {
+    if (linkedGoogleAccount) {
       try {
         const calendarEvent = await createGoogleMeetEventForBooking({
           bookingId: booking.id,
