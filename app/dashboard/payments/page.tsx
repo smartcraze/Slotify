@@ -1,4 +1,5 @@
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
+import { TestUpgradeButton } from "@/components/subscription/test-upgrade-button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SUBSCRIPTION_PLANS } from "@/data/subscription-plans";
@@ -24,7 +25,9 @@ export default async function PaymentsPage() {
       <Card>
         <CardHeader>
           <CardTitle>Subscription plans</CardTitle>
-          <CardDescription>Plan catalog from your pricing configuration</CardDescription>
+          <CardDescription>
+            Plan catalog from your pricing configuration with quick test activation.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-2 md:grid-cols-2">
           {SUBSCRIPTION_PLANS.map((plan) => (
@@ -32,6 +35,11 @@ export default async function PaymentsPage() {
               <p className="text-sm font-medium">{plan.name}</p>
               <p className="text-xs text-muted-foreground">INR {plan.monthlyPriceInr}/month</p>
               {user.subscriptionTier === plan.tier ? <Badge className="mt-2">Current</Badge> : null}
+              {plan.tier !== "FREE" ? (
+                <div className="mt-3">
+                  <TestUpgradeButton tier={plan.tier} className="w-full" />
+                </div>
+              ) : null}
             </div>
           ))}
         </CardContent>

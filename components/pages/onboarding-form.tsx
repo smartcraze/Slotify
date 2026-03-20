@@ -162,10 +162,10 @@ export function OnboardingForm(props: OnboardingFormProps) {
                   id="timezone"
                   value={timezone}
                   onChange={(event) => setTimezone(event.target.value)}
-                  className="flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-xs"
+                  className="flex h-9 w-full rounded-md border bg-white px-3 py-1 text-sm text-black shadow-xs"
                 >
                   {timezones.map((value) => (
-                    <option key={value} value={value}>
+                    <option key={value} value={value} className="text-black">
                       {value}
                     </option>
                   ))}

@@ -5,9 +5,16 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function LandingPage() {
+type LandingPageProps = {
+  isLoggedIn: boolean;
+};
+
+export function LandingPage({ isLoggedIn }: LandingPageProps) {
+  const primaryHref = isLoggedIn ? "/dashboard" : "/sign-in";
+  const primaryLabel = isLoggedIn ? "Dashboard" : "Login";
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-muted/30">
+    <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/30">
       <header className="border-b bg-background/90 backdrop-blur">
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <Link href="/" className="flex items-center gap-2 font-semibold">
@@ -18,9 +25,9 @@ export function LandingPage() {
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <Button asChild>
-              <Link href="/sign-in">
+              <Link href={primaryHref}>
                 <LogIn className="size-4" />
-                Login
+                {primaryLabel}
               </Link>
             </Button>
           </div>
@@ -45,10 +52,14 @@ export function LandingPage() {
 
           <div className="flex flex-wrap gap-3">
             <Button asChild size="lg">
-              <Link href="/sign-in">Start with Google</Link>
+              <Link href={isLoggedIn ? "/dashboard" : "/sign-in"}>
+                {isLoggedIn ? "Open dashboard" : "Start with Google"}
+              </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href="/sign-in">Use email and password</Link>
+              <Link href={isLoggedIn ? "/pricing" : "/sign-in"}>
+                {isLoggedIn ? "View pricing" : "Use email and password"}
+              </Link>
             </Button>
           </div>
         </section>

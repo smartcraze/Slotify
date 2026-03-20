@@ -24,10 +24,10 @@ type SendBookingNotificationInput = {
 export async function createAndSendBookingNotification(
   input: SendBookingNotificationInput
 ) {
-  const canSendNotifications = await canUserAccessFeature(
-    input.userId,
-    "EMAIL_NOTIFICATIONS"
-  );
+  const canSendNotifications =
+    input.type === "BOOKING_CONFIRMATION"
+      ? true
+      : await canUserAccessFeature(input.userId, "EMAIL_NOTIFICATIONS");
 
   if (!canSendNotifications) {
     return {

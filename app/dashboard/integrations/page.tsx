@@ -10,7 +10,7 @@ export default async function IntegrationsPage() {
   const [googleAccount, calendarConnection, recentNotifications] = await Promise.all([
     prisma.account.findFirst({
       where: { userId: user.id, providerId: "google" },
-      select: { providerId: true, accessTokenExpires: true },
+      select: { providerId: true, accessTokenExpiresAt: true },
     }),
     prisma.calendarConnection.findFirst({
       where: { userId: user.id, provider: "google" },

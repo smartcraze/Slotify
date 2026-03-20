@@ -1,8 +1,11 @@
-import { getServerSession } from "next-auth/next";
+import { headers } from "next/headers";
 
-import { authOptions } from "@/lib/auth/options";
+import { auth } from "@/lib/auth";
 
 export async function getAuthenticatedUserId() {
-  const session = await getServerSession(authOptions);
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   return session?.user?.id ?? null;
 }

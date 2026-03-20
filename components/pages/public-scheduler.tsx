@@ -1,8 +1,10 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { CalendarDays, Clock3, Globe, Video } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -22,16 +24,19 @@ type PublicSchedulerProps = {
 };
 
 function toDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function PublicScheduler(props: PublicSchedulerProps) {
-  const today = useMemo(() => toDateKey(new Date()), []);
-  const [dateKey, setDateKey] = useState(today);
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [step, setStep] = useState<"slots" | "details">("slots");
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [slotError, setSlotError] = useState<string | null>(null);
-  const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
+  const [activeSlot, setActiveSlot] = useState<AvailabilitySlot | null>(null);
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestNotes, setGuestNotes] = useState("");
@@ -42,11 +47,19 @@ export function PublicScheduler(props: PublicSchedulerProps) {
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
     []
   );
+  const dateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
+  const today = useMemo(() => {
+    const value = new Date();
+    value.setHours(0, 0, 0, 0);
+    return value;
+  }, []);
 
-  async function loadSlots(nextDateKey: string) {
+  const loadSlots = useCallback(async (nextDate: Date) => {
+    const nextDateKey = toDateKey(nextDate);
+
     setLoadingSlots(true);
     setSlotError(null);
-    setSelectedSlot(null);
+    setActiveSlot(null);
     setBookingState("idle");
     setBookingError(null);
 
@@ -69,17 +82,25 @@ export function PublicScheduler(props: PublicSchedulerProps) {
 
     setSlots(payload.data as AvailabilitySlot[]);
     setLoadingSlots(false);
-  }
+  }, [props.eventTypeId, props.hostId]);
 
-  async function onDateChange(value: string) {
-    setDateKey(value);
-    await loadSlots(value);
+  useEffect(() => {
+    void loadSlots(selectedDate);
+  }, [selectedDate, loadSlots]);
+
+  function onDateChange(nextDate: Date | undefined) {
+    if (!nextDate) {
+      return;
+    }
+
+    setSelectedDate(nextDate);
+    setStep("slots");
   }
 
   async function onBookSlot(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!selectedSlot) {
+    if (!activeSlot) {
       return;
     }
 
@@ -92,8 +113,8 @@ export function PublicScheduler(props: PublicSchedulerProps) {
       body: JSON.stringify({
         hostId: props.hostId,
         eventTypeId: props.eventTypeId,
-        startTimeUtc: selectedSlot.startTimeUtc,
-        endTimeUtc: selectedSlot.endTimeUtc,
+        startTimeUtc: activeSlot.startTimeUtc,
+        endTimeUtc: activeSlot.endTimeUtc,
         guestEmail,
         guestName: guestName || undefined,
         guestNotes: guestNotes || undefined,
@@ -110,11 +131,12 @@ export function PublicScheduler(props: PublicSchedulerProps) {
     }
 
     setBookingState("success");
-    setSelectedSlot(null);
+    setActiveSlot(null);
     setGuestName("");
     setGuestEmail("");
     setGuestNotes("");
-    await loadSlots(dateKey);
+    await loadSlots(selectedDate);
+    setStep("slots");
   }
 
   function formatSlot(value: string) {
@@ -124,97 +146,211 @@ export function PublicScheduler(props: PublicSchedulerProps) {
     }).format(new Date(value));
   }
 
+  function formatSelectedDate(value: Date) {
+    return new Intl.DateTimeFormat(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }).format(value);
+  }
+
+  function onSelectSlot(slot: AvailabilitySlot) {
+    setActiveSlot(slot);
+  }
+
+  function onContinueToDetails() {
+    if (!activeSlot) {
+      return;
+    }
+
+    setStep("details");
+  }
+
+  const hostInitial = props.hostName.trim().charAt(0).toUpperCase() || "H";
+
+  if (step === "details" && activeSlot) {
+    return (
+      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
+        <div className="mx-auto grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
+          <section className="space-y-4 border-b p-6 md:border-b-0 md:border-r">
+            <div className="flex items-center gap-3">
+              <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+                {hostInitial}
+              </div>
+              <p className="text-sm text-muted-foreground">{props.hostName}</p>
+            </div>
+
+            <h1 className="text-3xl font-semibold">{props.eventTypeName}</h1>
+
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <p className="flex items-center gap-2">
+                <CalendarDays className="size-4" />
+                {formatSelectedDate(selectedDate)}
+              </p>
+              <p className="flex items-center gap-2">
+                <Clock3 className="size-4" />
+                {formatSlot(activeSlot.startTimeUtc)} - {formatSlot(activeSlot.endTimeUtc)}
+              </p>
+              <p className="flex items-center gap-2">
+                <Video className="size-4" />
+                Google Meet
+              </p>
+              <p className="flex items-center gap-2">
+                <Globe className="size-4" />
+                {attendeeTimezone}
+              </p>
+            </div>
+          </section>
+
+          <section className="space-y-4 p-6">
+            {bookingState === "success" ? (
+              <div className="rounded-md border bg-background p-3 text-sm">
+                Booking confirmed. Check your email for details.
+              </div>
+            ) : null}
+
+            <form className="space-y-4" onSubmit={onBookSlot}>
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="guestName">
+                  Your name
+                </label>
+                <Input
+                  id="guestName"
+                  type="text"
+                  value={guestName}
+                  onChange={(event) => setGuestName(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="guestEmail">
+                  Email address
+                </label>
+                <Input
+                  id="guestEmail"
+                  type="email"
+                  value={guestEmail}
+                  onChange={(event) => setGuestEmail(event.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium" htmlFor="guestNotes">
+                  Additional notes
+                </label>
+                <Textarea
+                  id="guestNotes"
+                  placeholder="Please share anything that will help prepare for our meeting."
+                  value={guestNotes}
+                  onChange={(event) => setGuestNotes(event.target.value)}
+                  rows={4}
+                />
+              </div>
+
+              {bookingError ? <p className="text-sm text-destructive">{bookingError}</p> : null}
+
+              <div className="flex items-center justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setStep("slots")}
+                >
+                  Back
+                </Button>
+                <Button type="submit" disabled={bookingState === "submitting"}>
+                  {bookingState === "submitting" ? "Confirming..." : "Confirm"}
+                </Button>
+              </div>
+            </form>
+          </section>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <div className="grid gap-6 rounded-xl border bg-card p-4 sm:p-6 lg:grid-cols-[320px_1fr_300px]">
-        <section className="space-y-4 border-b pb-4 lg:border-b-0 lg:border-r lg:pb-0 lg:pr-4">
-          <div>
+      <div className="grid gap-0 overflow-hidden rounded-2xl border bg-card lg:grid-cols-[280px_1fr_280px]">
+        <section className="space-y-4 border-b p-6 lg:border-b-0 lg:border-r">
+          <div className="flex items-center gap-3">
+            <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
+              {hostInitial}
+            </div>
             <p className="text-sm text-muted-foreground">{props.hostName}</p>
-            <h1 className="text-3xl font-semibold">{props.eventTypeName}</h1>
           </div>
-          <p className="text-sm text-muted-foreground">{props.eventDurationMinutes} minutes</p>
-          <p className="text-sm text-muted-foreground">Timezone: {props.hostTimezone}</p>
+          <h1 className="text-4xl font-semibold leading-tight">{props.eventTypeName}</h1>
+
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2">
+              <Clock3 className="size-4" />
+              {props.eventDurationMinutes}m
+            </p>
+            <p className="flex items-center gap-2">
+              <Video className="size-4" />
+              Google Meet
+            </p>
+            <p className="flex items-center gap-2">
+              <Globe className="size-4" />
+              {props.hostTimezone}
+            </p>
+          </div>
+
           {props.hostBio ? <p className="text-sm text-muted-foreground">{props.hostBio}</p> : null}
         </section>
 
-        <section className="space-y-4">
-          <div className="flex items-center justify-between gap-3">
-            <label className="text-sm font-medium" htmlFor="bookingDate">
-              Select date
-            </label>
-            <Input
-              id="bookingDate"
-              type="date"
-              value={dateKey}
-              min={today}
-              onChange={(event) => void onDateChange(event.target.value)}
-              className="max-w-[220px]"
-            />
+        <section className="space-y-3 border-b p-6 lg:border-b-0 lg:border-r">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium">{new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(selectedDate)}</h2>
+            <p className="text-xs text-muted-foreground">Select date</p>
           </div>
+
+          <Calendar
+            mode="single"
+            selected={selectedDate}
+            onSelect={onDateChange}
+            disabled={{ before: today }}
+            className="w-full rounded-lg border bg-background"
+          />
 
           {loadingSlots ? <p className="text-sm text-muted-foreground">Loading slots...</p> : null}
           {slotError ? <p className="text-sm text-destructive">{slotError}</p> : null}
+        </section>
+
+        <section className="space-y-3 p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-medium">
+              {new Intl.DateTimeFormat(undefined, { weekday: "short", day: "numeric" }).format(selectedDate)}
+            </h2>
+            <div className="rounded-md border px-2 py-1 text-xs text-muted-foreground">{dateKey}</div>
+          </div>
 
           {!loadingSlots && !slotError && slots.length === 0 ? (
             <p className="text-sm text-muted-foreground">No slots available for this date.</p>
           ) : null}
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          <div className="max-h-105 space-y-2 overflow-y-auto pr-1">
             {slots.map((slot) => {
-              const isSelected = selectedSlot?.startTimeUtc === slot.startTimeUtc;
+              const isSelected = activeSlot?.startTimeUtc === slot.startTimeUtc;
               return (
                 <Button
                   key={slot.startTimeUtc}
                   variant={isSelected ? "default" : "outline"}
-                  onClick={() => setSelectedSlot(slot)}
+                  className="w-full justify-between"
+                  onClick={() => onSelectSlot(slot)}
                 >
-                  {formatSlot(slot.startTimeUtc)}
+                  <span>{formatSlot(slot.startTimeUtc)}</span>
+                  <span className="text-xs opacity-70">{props.eventDurationMinutes}m</span>
                 </Button>
               );
             })}
           </div>
-        </section>
 
-        <section className="space-y-4 border-t pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-          {bookingState === "success" ? (
-            <div className="rounded-md border bg-background p-3 text-sm">
-              Booking confirmed. Check your email for details.
-            </div>
-          ) : null}
-
-          <p className="text-sm font-medium">
-            {selectedSlot
-              ? `Selected: ${formatSlot(selectedSlot.startTimeUtc)}`
-              : "Choose a time to continue"}
-          </p>
-
-          <form className="space-y-3" onSubmit={onBookSlot}>
-            <Input
-              type="text"
-              placeholder="Your name"
-              value={guestName}
-              onChange={(event) => setGuestName(event.target.value)}
-            />
-            <Input
-              type="email"
-              placeholder="you@example.com"
-              value={guestEmail}
-              onChange={(event) => setGuestEmail(event.target.value)}
-              required
-            />
-            <Textarea
-              placeholder="Notes (optional)"
-              value={guestNotes}
-              onChange={(event) => setGuestNotes(event.target.value)}
-              rows={4}
-            />
-
-            {bookingError ? <p className="text-sm text-destructive">{bookingError}</p> : null}
-
-            <Button type="submit" disabled={!selectedSlot || bookingState === "submitting"} className="w-full">
-              {bookingState === "submitting" ? "Booking..." : "Book meeting"}
-            </Button>
-          </form>
+          <Button className="w-full" disabled={!activeSlot} onClick={onContinueToDetails}>
+            Continue
+          </Button>
         </section>
       </div>
     </main>

@@ -4,13 +4,13 @@ import { FormEvent, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { KeyRound, Mail } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { signIn } from "@/lib/auth-client";
 
 function GoogleLogo() {
   return (
@@ -62,19 +62,16 @@ export default function SignInPage() {
     setLoading("google");
     toast.info("Redirecting to Google...");
 
-    const result = await signIn("google", {
-      callbackUrl,
-      redirect: false,
+    const { error } = await signIn.social({
+      provider: "google",
+      callbackURL: callbackUrl,
     });
 
-    if (!result || result.error) {
-      setErrorMessage("Unable to start Google sign-in");
-      toast.error("Unable to start Google sign-in");
+    if (error) {
+      setErrorMessage(error.message ?? "Unable to start Google sign-in");
+      toast.error(error.message ?? "Unable to start Google sign-in");
       setLoading(null);
-      return;
     }
-
-    router.push(result.url ?? `/api/auth/signin/google?callbackUrl=${encodeURIComponent(callbackUrl)}`);
   }
 
   async function onCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
@@ -83,22 +80,22 @@ export default function SignInPage() {
     setErrorMessage(null);
     setLoading("credentials");
 
-    const result = await signIn("credentials", {
+    const { error } = await signIn.email({
       email,
       password,
-      callbackUrl,
-      redirect: false,
+      callbackURL: callbackUrl,
     });
 
-    if (!result || result.error) {
-      setErrorMessage("Invalid email or password");
-      toast.error("Sign-in failed. Check your credentials.");
+    if (error) {
+      setErrorMessage(error.message ?? "Invalid email or password");
+      toast.error(error.message ?? "Sign-in failed. Check your credentials.");
       setLoading(null);
       return;
     }
 
     toast.success("Sign-in successful. Redirecting...");
-    router.push(result.url || callbackUrl);
+    router.push(callbackUrl);
+    router.refresh();
   }
 
   return (
