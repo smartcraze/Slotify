@@ -10,12 +10,8 @@ export const auth = betterAuth({
   }),
   advanced: {
     database: {
-      // Keep IDs consistent with Prisma schema defaults (@default(cuid())).
       generateId: false,
     },
-  },
-  emailAndPassword: {
-    enabled: true,
   },
   socialProviders: {
     google: {
@@ -23,7 +19,7 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       scope: ["openid", "email", "profile", "https://www.googleapis.com/auth/calendar.events"],
       accessType: "offline",
-      prompt: "consent",
+      prompt: "login",
     },
   },
   plugins: [nextCookies()],

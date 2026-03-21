@@ -6,6 +6,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -17,6 +18,7 @@ type AvailabilitySlot = {
 type PublicSchedulerProps = {
   hostId: string;
   hostName: string;
+  hostImage?: string | null;
   hostBio: string | null;
   hostTimezone: string;
   eventTypeId: string;
@@ -336,9 +338,10 @@ export function PublicScheduler(props: PublicSchedulerProps) {
         <div className="mx-auto grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
           <section className="space-y-4 border-b p-6 md:border-b-0 md:border-r">
             <div className="flex items-center gap-3">
-              <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-                {hostInitial}
-              </div>
+              <Avatar size="default" className="ring-2 ring-primary/15">
+                <AvatarImage src={props.hostImage ?? undefined} alt={props.hostName} />
+                <AvatarFallback>{hostInitial}</AvatarFallback>
+              </Avatar>
               <p className="text-sm text-muted-foreground">{props.hostName}</p>
             </div>
 
@@ -435,9 +438,10 @@ export function PublicScheduler(props: PublicSchedulerProps) {
       <div className="grid gap-0 overflow-hidden rounded-2xl border bg-card lg:grid-cols-[280px_1fr_280px]">
         <section className="space-y-4 border-b p-6 lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3">
-            <div className="flex size-8 items-center justify-center rounded-full bg-muted text-xs font-semibold">
-              {hostInitial}
-            </div>
+            <Avatar size="default" className="ring-2 ring-primary/15">
+              <AvatarImage src={props.hostImage ?? undefined} alt={props.hostName} />
+              <AvatarFallback>{hostInitial}</AvatarFallback>
+            </Avatar>
             <p className="text-sm text-muted-foreground">{props.hostName}</p>
           </div>
           <h1 className="text-4xl font-semibold leading-tight">{props.eventTypeName}</h1>

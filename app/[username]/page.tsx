@@ -22,6 +22,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
       id: true,
       username: true,
       name: true,
+      image: true,
       bio: true,
       timezone: true,
     },
@@ -62,6 +63,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
     <PublicScheduler
       hostId={user.id}
       hostName={user.name || user.username || "Host"}
+      hostImage={user.image}
       hostBio={user.bio}
       hostTimezone={user.timezone || "UTC"}
       eventTypeId={eventType.id}

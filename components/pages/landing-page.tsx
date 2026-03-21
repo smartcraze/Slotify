@@ -58,8 +58,8 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
               </Link>
             </Button>
             <Button asChild size="lg" variant="outline">
-              <Link href={isLoggedIn ? "/pricing" : "/sign-in"}>
-                {isLoggedIn ? "View pricing" : "Use email and password"}
+              <Link href="/pricing">
+                View pricing
               </Link>
             </Button>
           </div>

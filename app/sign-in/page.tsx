@@ -1,15 +1,12 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { KeyRound, Mail } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
 
 function GoogleLogo() {
@@ -47,20 +44,17 @@ function resolveCallbackUrl(rawCallbackUrl: string | null) {
   return rawCallbackUrl;
 }
 
-export default function SignInPage() {
-  const router = useRouter();
+function SignInPageContent() {
   const searchParams = useSearchParams();
   const callbackUrl = resolveCallbackUrl(searchParams.get("callbackUrl"));
   const isGoogleLinkMode = searchParams.get("mode") === "link-google";
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState<"google" | "credentials" | null>(null);
+  const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   async function onGoogleSignIn() {
     setErrorMessage(null);
-    setLoading("google");
+    setLoading(true);
     toast.info("Redirecting to Google...");
 
     const { error } = await signIn.social({
@@ -71,32 +65,8 @@ export default function SignInPage() {
     if (error) {
       setErrorMessage(error.message ?? "Unable to start Google sign-in");
       toast.error(error.message ?? "Unable to start Google sign-in");
-      setLoading(null);
+      setLoading(false);
     }
-  }
-
-  async function onCredentialsSignIn(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    setErrorMessage(null);
-    setLoading("credentials");
-
-    const { error } = await signIn.email({
-      email,
-      password,
-      callbackURL: callbackUrl,
-    });
-
-    if (error) {
-      setErrorMessage(error.message ?? "Invalid email or password");
-      toast.error(error.message ?? "Sign-in failed. Check your credentials.");
-      setLoading(null);
-      return;
-    }
-
-    toast.success("Sign-in successful. Redirecting...");
-    router.push(callbackUrl);
-    router.refresh();
   }
 
   return (
@@ -107,7 +77,7 @@ export default function SignInPage() {
           <CardDescription>
             {isGoogleLinkMode
               ? "Connect your Google account to enable Google Meet link generation."
-              : "Continue with Google or use email and password."}
+              : "Continue with Google to start scheduling and calendar sync."}
           </CardDescription>
         </CardHeader>
 
@@ -116,61 +86,16 @@ export default function SignInPage() {
             type="button"
             className="w-full"
             onClick={onGoogleSignIn}
-            disabled={loading !== null}
+            disabled={loading}
           >
             <GoogleLogo />
             Continue with Google
           </Button>
 
-          <form className="space-y-4" onSubmit={onCredentialsSignIn}>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <div className="relative">
-                <Mail className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@example.com"
-                  className="pl-9"
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <KeyRound className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Your password"
-                  className="pl-9"
-                  required
-                />
-              </div>
-            </div>
-
-            {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
-
-            <Button type="submit" variant="outline" className="w-full" disabled={loading !== null}>
-              Sign in with email
-            </Button>
-          </form>
+          {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
 
           <p className="text-xs text-muted-foreground">
-            New users can start with Google and complete profile setup after sign-in.
-          </p>
-
-          <p className="text-xs text-muted-foreground">
-            Need an account?{" "}
-            <Link href="/sign-up" className="underline underline-offset-4">
-              Create one
-            </Link>
+            Slotify uses Google sign-in only. New users can continue and complete profile setup after sign-in.
           </p>
 
           <p className="text-xs text-muted-foreground">
@@ -179,5 +104,13 @@ export default function SignInPage() {
         </CardContent>
       </Card>
     </main>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInPageContent />
+    </Suspense>
   );
 }

@@ -18,7 +18,6 @@ model Account {
   accessTokenExpiresAt  DateTime?
   refreshTokenExpiresAt DateTime?
   scope                 String?
-  password              String?
   createdAt             DateTime @default(now())
   updatedAt             DateTime @updatedAt
   user                  User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -53,7 +52,6 @@ model Verification {
 model User {
   id                String                @id @default(cuid())
   username          String?               @unique
-  passwordHash      String?
   name              String?
   email             String?               @unique
   emailVerified     Boolean               @default(false)

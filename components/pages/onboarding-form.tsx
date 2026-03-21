@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -49,6 +49,7 @@ function slugify(value: string) {
 export function OnboardingForm(props: OnboardingFormProps) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [isTimezoneListReady, setIsTimezoneListReady] = useState(false);
 
   const [name, setName] = useState(props.defaultName);
   const [username, setUsername] = useState(props.defaultUsername);
@@ -63,14 +64,32 @@ export function OnboardingForm(props: OnboardingFormProps) {
   const [availabilityEndTime, setAvailabilityEndTime] = useState("17:00");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitArmed, setIsSubmitArmed] = useState(false);
 
   const timezones = useMemo(() => {
+    if (!isTimezoneListReady) {
+      return [props.defaultTimezone];
+    }
+
     if (typeof Intl.supportedValuesOf !== "function") {
       return [props.defaultTimezone, "UTC"];
     }
 
-    return Intl.supportedValuesOf("timeZone");
-  }, [props.defaultTimezone]);
+    const values = new Set<string>(Intl.supportedValuesOf("timeZone"));
+    values.add(props.defaultTimezone);
+
+    return Array.from(values).sort((a, b) => a.localeCompare(b));
+  }, [isTimezoneListReady, props.defaultTimezone]);
+
+  useEffect(() => {
+    setIsTimezoneListReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (step === 3) {
+      setIsSubmitArmed(false);
+    }
+  }, [step]);
 
   function onEventTypeNameBlur() {
     if (eventTypeSlug.trim().length > 0) {
@@ -93,6 +112,12 @@ export function OnboardingForm(props: OnboardingFormProps) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (step !== 3 || !isSubmitArmed) {
+      return;
+    }
+
+    setIsSubmitArmed(false);
     setErrorMessage(null);
     setIsSubmitting(true);
 
@@ -326,7 +351,11 @@ export function OnboardingForm(props: OnboardingFormProps) {
                   Continue
                 </Button>
               ) : (
-                <Button type="submit" disabled={isSubmitting || !canSubmit}>
+                <Button
+                  type="submit"
+                  disabled={isSubmitting || !canSubmit}
+                  onClick={() => setIsSubmitArmed(true)}
+                >
                   {isSubmitting ? "Saving..." : "Finish setup"}
                 </Button>
               )}

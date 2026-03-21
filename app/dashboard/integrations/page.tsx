@@ -1,8 +1,6 @@
-import Link from "next/link";
-
+import { ConnectGoogleCalendarButton } from "@/components/dashboard/connect-google-calendar-button";
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireDashboardUser } from "@/lib/dashboard";
 import { prisma } from "@/lib/prisma";
@@ -54,11 +52,7 @@ export default async function IntegrationsPage() {
                 <p className="text-xs font-medium">
                   Google Meet links require a connected Google account with Calendar access.
                 </p>
-                <Button asChild size="sm" className="w-full sm:w-auto">
-                  <Link href="/sign-in?mode=link-google&callbackUrl=%2Fdashboard%2Fintegrations">
-                    Connect Google Calendar
-                  </Link>
-                </Button>
+                <ConnectGoogleCalendarButton callbackUrl="/dashboard/integrations" />
               </div>
             ) : null}
           </CardContent>
