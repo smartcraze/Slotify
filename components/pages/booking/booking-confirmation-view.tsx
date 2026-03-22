@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Check, ExternalLink } from "lucide-react";
 
@@ -172,12 +173,21 @@ export function BookingConfirmationView(props: BookingConfirmationViewProps) {
 
           <div className="my-7 border-t border-border" />
 
-          <p className="text-center text-base text-muted-foreground">
-            Need to make a change? <a href={props.bookAnotherHref} className="underline underline-offset-4">Reschedule</a> or{" "}
-            <button type="button" className="underline underline-offset-4" onClick={() => { setShowCancelForm((v) => !v); setCancelError(null); }}>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button asChild>
+              <Link href={props.bookAnotherHref}>Book another slot</Link>
+            </Button>
+            <button
+              type="button"
+              className="text-base text-muted-foreground underline underline-offset-4"
+              onClick={() => {
+                setShowCancelForm((v) => !v);
+                setCancelError(null);
+              }}
+            >
               Cancel
             </button>
-          </p>
+          </div>
 
           {showCancelForm ? (
             <div className="mt-5 space-y-3 rounded-lg border border-border bg-background p-4">
@@ -199,16 +209,6 @@ export function BookingConfirmationView(props: BookingConfirmationViewProps) {
               </div>
             </div>
           ) : null}
-
-          <div className="my-7 border-t border-border" />
-
-          <div className="flex items-center justify-center gap-3 text-sm text-muted-foreground">
-            <span>Add to calendar</span>
-            <Button type="button" size="icon" variant="outline" aria-label="Google calendar">G</Button>
-            <Button type="button" size="icon" variant="outline" aria-label="Outlook calendar">O</Button>
-            <Button type="button" size="icon" variant="outline" aria-label="Office 365 calendar">365</Button>
-            <Button type="button" size="icon" variant="outline" aria-label="iCal calendar">iCal</Button>
-          </div>
 
           <p className="mt-6 text-xs text-muted-foreground">
             Booking #{props.bookingId} • {props.status} • Created {formatFullDateTime(props.createdAt)} • {props.guestNotes || "No notes"}
