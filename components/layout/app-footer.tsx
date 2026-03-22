@@ -1,12 +1,12 @@
 import Link from "next/link";
 
-import { APP_NAME } from "@/data/branding";
+import { BrandLogo } from "@/components/layout/brand-logo";
 
 export function AppFooter() {
   return (
     <footer className="border-t bg-background">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 text-sm text-muted-foreground sm:px-6">
-        <p>{APP_NAME}</p>
+        <BrandLogo href="/" textClassName="text-muted-foreground" />
         <nav className="flex items-center gap-4">
           <Link href="/privacy-policy" className="hover:text-foreground">
             Privacy Policy

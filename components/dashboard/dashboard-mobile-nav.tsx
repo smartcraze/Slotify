@@ -10,6 +10,7 @@ import {
   isActivePath,
 } from "@/components/dashboard/nav-items";
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -38,7 +39,9 @@ export function DashboardMobileNav(props: DashboardMobileNavProps) {
 
       <SheetContent side="left" className="w-80">
         <SheetHeader>
-          <SheetTitle>Dashboard</SheetTitle>
+          <SheetTitle>
+            <BrandLogo href="/dashboard" />
+          </SheetTitle>
           <SheetDescription className="sr-only">
             Dashboard navigation links and account actions.
           </SheetDescription>

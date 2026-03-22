@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 import { SignOutButton } from "@/components/auth/sign-out-button";
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +12,6 @@ import {
   getPublicProfileHref,
   isActivePath,
 } from "@/components/dashboard/nav-items";
-import { APP_NAME } from "@/data/branding";
 
 type DashboardSidebarProps = {
   username: string;
@@ -24,7 +24,7 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
   return (
     <aside className="hidden w-64 shrink-0 border-r p-4 lg:block">
       <div className="mb-6 space-y-1">
-        <p className="text-sm font-semibold">{APP_NAME}</p>
+        <BrandLogo href="/dashboard" />
         <Badge variant="outline">{props.subscriptionTier}</Badge>
       </div>
 
