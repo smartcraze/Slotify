@@ -40,7 +40,7 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
               variant={active ? "secondary" : "ghost"}
               className="w-full justify-start"
             >
-              <Link href={item.href}>
+              <Link href={item.href} prefetch>
                 <Icon className="size-4" />
                 {item.label}
               </Link>
@@ -51,7 +51,7 @@ export function DashboardSidebar(props: DashboardSidebarProps) {
 
       <div className="mt-6 border-t pt-4">
         <Button asChild variant="outline" className="w-full justify-start">
-          <Link href={getPublicProfileHref(props.username)}>
+          <Link href={getPublicProfileHref(props.username)} prefetch>
             <span className="truncate">Public Page</span>
           </Link>
         </Button>

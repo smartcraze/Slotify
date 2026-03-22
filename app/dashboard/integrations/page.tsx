@@ -32,6 +32,8 @@ export default async function IntegrationsPage() {
       subtitle="Google calendar and notification delivery status"
       username={user.username}
       subscriptionTier={user.subscriptionTier}
+      profileName={user.name}
+      profileImage={user.image}
     >
       <section className="grid gap-4 lg:grid-cols-2">
         <Card>

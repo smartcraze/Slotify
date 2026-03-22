@@ -29,7 +29,14 @@ export default async function DashboardPage() {
         status: { in: ["PENDING", "CONFIRMED", "RESCHEDULED"] },
         startTimeUtc: { gte: now },
       },
-      include: { eventType: { select: { name: true } } },
+      select: {
+        id: true,
+        status: true,
+        guestName: true,
+        guestEmail: true,
+        startTimeUtc: true,
+        eventType: { select: { name: true } },
+      },
       orderBy: { startTimeUtc: "asc" },
       take: 6,
     }),
@@ -43,6 +50,8 @@ export default async function DashboardPage() {
       subtitle="Your scheduling workspace at a glance"
       username={user.username}
       subscriptionTier={user.subscriptionTier}
+      profileName={user.name}
+      profileImage={user.image}
     >
       <section className="mb-4">
         <PublicBookingLinkCard username={user.username} />
@@ -107,10 +116,10 @@ export default async function DashboardPage() {
             <CardDescription>Manage core scheduling workflows</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-2 sm:grid-cols-2">
-            <Button asChild variant="outline"><Link href="/dashboard/event-types">Manage event types</Link></Button>
-            <Button asChild variant="outline"><Link href="/dashboard/bookings">Manage bookings</Link></Button>
-            <Button asChild variant="outline"><Link href="/dashboard/availability">Check availability</Link></Button>
-            <Button asChild><Link href="/onboarding">Edit profile setup</Link></Button>
+            <Button asChild variant="outline"><Link href="/dashboard/event-types" prefetch>Manage event types</Link></Button>
+            <Button asChild variant="outline"><Link href="/dashboard/bookings" prefetch>Manage bookings</Link></Button>
+            <Button asChild variant="outline"><Link href="/dashboard/availability" prefetch>Check availability</Link></Button>
+            <Button asChild><Link href="/onboarding" prefetch>Edit profile setup</Link></Button>
           </CardContent>
         </Card>
       </section>

@@ -20,6 +20,8 @@ export default async function AvailabilityPage() {
       subtitle="Inspect generated slots using your API rules"
       username={user.username}
       subscriptionTier={user.subscriptionTier}
+      profileName={user.name}
+      profileImage={user.image}
     >
       <Card>
         <CardHeader>

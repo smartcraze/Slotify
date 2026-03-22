@@ -20,7 +20,16 @@ export default async function BookingsPage() {
 
   const bookings = await prisma.booking.findMany({
     where: { hostId: user.id },
-    include: { eventType: { select: { name: true, duration: true } } },
+    select: {
+      id: true,
+      status: true,
+      guestName: true,
+      guestEmail: true,
+      startTimeUtc: true,
+      endTimeUtc: true,
+      meetingLink: true,
+      eventType: { select: { name: true, duration: true } },
+    },
     orderBy: { startTimeUtc: "desc" },
     take: 40,
   });
@@ -32,6 +41,8 @@ export default async function BookingsPage() {
       subtitle="Monitor and manage attendee bookings"
       username={user.username}
       subscriptionTier={user.subscriptionTier}
+      profileName={user.name}
+      profileImage={user.image}
     >
       <Card>
         <CardHeader>

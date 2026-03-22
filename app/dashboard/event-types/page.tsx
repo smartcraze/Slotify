@@ -13,6 +13,14 @@ export default async function EventTypesPage() {
   const eventTypes = await prisma.eventType.findMany({
     where: { hostId: user.id },
     orderBy: { createdAt: "desc" },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      duration: true,
+      status: true,
+      isPublic: true,
+    },
   });
 
   return (
@@ -22,6 +30,8 @@ export default async function EventTypesPage() {
       subtitle="Create and manage your public booking types"
       username={user.username}
       subscriptionTier={user.subscriptionTier}
+      profileName={user.name}
+      profileImage={user.image}
     >
       <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-emerald-900">
         <div className="flex flex-wrap items-center justify-between gap-3">

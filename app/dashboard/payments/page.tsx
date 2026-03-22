@@ -9,19 +9,28 @@ import { prisma } from "@/lib/prisma";
 export default async function PaymentsPage() {
   const user = await requireDashboardUser();
 
-  const subscriptionOrders = await prisma.subscriptionOrder.findMany({
-    where: { userId: user.id },
-    orderBy: { createdAt: "desc" },
-    take: 20,
-  });
-
-  const currentUser = await prisma.user.findUnique({
-    where: { id: user.id },
-    select: {
-      name: true,
-      email: true,
-    },
-  });
+  const [subscriptionOrders, currentUser] = await Promise.all([
+    prisma.subscriptionOrder.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+      select: {
+        id: true,
+        planTier: true,
+        billingCycle: true,
+        finalAmountInr: true,
+        discountInr: true,
+        status: true,
+      },
+    }),
+    prisma.user.findUnique({
+      where: { id: user.id },
+      select: {
+        name: true,
+        email: true,
+      },
+    }),
+  ]);
 
   return (
     <DashboardPageShell
@@ -30,6 +39,8 @@ export default async function PaymentsPage() {
       subtitle="Subscription plan and payment records"
       username={user.username}
       subscriptionTier={user.subscriptionTier}
+      profileName={currentUser?.name ?? user.name}
+      profileImage={user.image}
     >
       <Card>
         <CardHeader>

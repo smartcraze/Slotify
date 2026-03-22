@@ -22,6 +22,7 @@ export async function requireDashboardUser() {
     select: {
       id: true,
       name: true,
+      image: true,
       email: true,
       username: true,
       timezone: true,
