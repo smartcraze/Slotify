@@ -1,34 +1,22 @@
 "use client";
 
 import { Suspense, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
+import { BrandLogo } from "@/components/layout/brand-logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signIn } from "@/lib/auth-client";
 
 function GoogleLogo() {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4">
-      <path
-        d="M21.35 11.1H12v2.98h5.39c-.23 1.49-1.78 4.37-5.39 4.37A6 6 0 0 1 12 6.46a5.38 5.38 0 0 1 3.81 1.48l2.6-2.51A8.96 8.96 0 0 0 12 3a9 9 0 1 0 0 18c5.2 0 8.64-3.65 8.64-8.8 0-.59-.07-.94-.16-1.1z"
-        fill="#FFC107"
-      />
-      <path
-        d="M3.55 7.7l2.45 1.8A5.98 5.98 0 0 1 12 6.46a5.38 5.38 0 0 1 3.81 1.48l2.6-2.51A8.96 8.96 0 0 0 12 3 8.99 8.99 0 0 0 3.55 7.7z"
-        fill="#FF3D00"
-      />
-      <path
-        d="M12 21a9 9 0 0 0 6.16-2.39l-2.84-2.4A5.66 5.66 0 0 1 12 18.45a5.99 5.99 0 0 1-5.67-4.13l-2.54 1.96A9 9 0 0 0 12 21z"
-        fill="#4CAF50"
-      />
-      <path
-        d="M21.35 11.1H12v2.98h5.39a4.58 4.58 0 0 1-2.07 2.13l2.84 2.4c1.64-1.51 2.84-3.74 2.84-6.41 0-.59-.07-.94-.16-1.1z"
-        fill="#1976D2"
-      />
-    </svg>
+    <span className="inline-flex size-4 items-center justify-center">
+      <Image src="/google.png" alt="Google" width={16} height={16} className="h-4 w-4 object-contain" />
+    </span>
   );
 }
 
@@ -70,40 +58,62 @@ function SignInPageContent() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-4 py-10">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Sign in</CardTitle>
-          <CardDescription>
-            {isGoogleLinkMode
-              ? "Connect your Google account to enable Google Meet link generation."
-              : "Continue with Google to start scheduling and calendar sync."}
-          </CardDescription>
-        </CardHeader>
+    <div className="min-h-screen bg-linear-to-b from-background to-muted/20">
+      <header className="border-b bg-background/90 backdrop-blur">
+        <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+          <BrandLogo href="/" />
 
-        <CardContent className="space-y-5">
-          <Button
-            type="button"
-            className="w-full"
-            onClick={onGoogleSignIn}
-            disabled={loading}
-          >
-            <GoogleLogo />
-            Continue with Google
-          </Button>
+          <div className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <Link href="/" className="transition hover:text-foreground">Home</Link>
+            <Link href="/pricing" className="transition hover:text-foreground">Pricing</Link>
 
-          {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+          </div>
 
-          <p className="text-xs text-muted-foreground">
-            Slotify uses Google sign-in only. New users can continue and complete profile setup after sign-in.
-          </p>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button asChild variant="outline" size="sm">
+              <Link href="/">Back</Link>
+            </Button>
+          </div>
+        </nav>
+      </header>
 
-          <p className="text-xs text-muted-foreground">
-            Back to <Link href="/" className="underline underline-offset-4">home</Link>
-          </p>
-        </CardContent>
-      </Card>
-    </main>
+      <main className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center justify-center px-4 sm:px-6">
+
+        <Card className="mx-auto w-full max-w-md rounded-2xl shadow-sm">
+          <CardHeader className="space-y-3 text-center">
+
+            <CardDescription>
+              {isGoogleLinkMode
+                ? "Connect your Google account to enable Google Meet link generation."
+                : "Continue with Google to start scheduling and calendar sync."}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-5">
+            <div className="flex items-center justify-center">
+              <Button
+                type="button"
+                className="h-11 w-full max-w-sm items-center justify-center gap-2 bg-foreground text-background hover:bg-foreground/90"
+                onClick={onGoogleSignIn}
+                disabled={loading}
+              >
+                <GoogleLogo />
+                Continue with Google
+              </Button>
+            </div>
+
+            {errorMessage ? <p className="text-sm text-destructive">{errorMessage}</p> : null}
+
+            <p className="text-xs text-muted-foreground">
+              Slotify uses Google sign-in only. New users can continue and complete profile setup after sign-in.
+            </p>
+
+
+          </CardContent>
+        </Card>
+      </main>
+    </div>
   );
 }
 
