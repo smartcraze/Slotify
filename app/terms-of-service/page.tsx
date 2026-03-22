@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 
+import { APP_DOMAIN, APP_LEGAL_NAME } from "@/data/branding";
+
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms of Service for Slotify.",
+  description: "Terms of Service for Slotify - by surajv.dev.",
 };
 
 export default function TermsOfServicePage() {
@@ -14,15 +16,15 @@ export default function TermsOfServicePage() {
       </p>
 
       <p className="mt-6 text-sm text-muted-foreground">
-        These Terms govern your use of Slotify and related scheduling features,
-        including Google Calendar integration.
+        These Terms govern your use of {APP_LEGAL_NAME} on {APP_DOMAIN}, including Google OAuth login and Google
+        Calendar integration.
       </p>
 
       <ol className="mt-6 list-decimal space-y-4 pl-5 text-sm leading-6 text-foreground">
         <li>
           <span className="font-medium">Acceptance of terms</span>
           <p className="text-muted-foreground">
-            By using Slotify, you agree to these Terms.
+            By using Slotify, you agree to these Terms and our Privacy Policy.
           </p>
         </li>
         <li>
@@ -42,8 +44,9 @@ export default function TermsOfServicePage() {
         <li>
           <span className="font-medium">Google integration</span>
           <p className="text-muted-foreground">
-            If you connect Google Calendar, you authorize Slotify to access
-            required calendar scopes to create and manage events.
+            Google Calendar access is used only to check availability and create, update, or cancel meetings
+            requested by the user. We do not sell Google user data, and users can revoke calendar access from their
+            Google account at any time.
           </p>
         </li>
         <li>
@@ -63,14 +66,14 @@ export default function TermsOfServicePage() {
         <li>
           <span className="font-medium">Limitation of liability</span>
           <p className="text-muted-foreground">
-            Slotify is provided "as is" without warranties to the fullest extent
-            allowed by law.
+            Slotify is provided "as is" without warranties to the fullest extent allowed by law. We are not liable for
+            indirect or consequential damages resulting from your use of the service.
           </p>
         </li>
         <li>
           <span className="font-medium">Contact</span>
           <p className="text-muted-foreground">
-            For legal questions, contact: support@slotify.app
+            For legal questions, contact: hello@surajv.dev (Developer: Suraj)
           </p>
         </li>
       </ol>

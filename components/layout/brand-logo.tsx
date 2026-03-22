@@ -6,6 +6,7 @@ import { APP_NAME } from "@/data/branding";
 type BrandLogoProps = {
   href?: string;
   withText?: boolean;
+  showLegalSuffix?: boolean;
   className?: string;
   iconClassName?: string;
   textClassName?: string;
@@ -58,6 +59,7 @@ function BrandGlyph({ className }: { className?: string }) {
 export function BrandLogo({
   href = "/",
   withText = true,
+  showLegalSuffix = false,
   className,
   iconClassName,
   textClassName,
@@ -65,7 +67,18 @@ export function BrandLogo({
   return (
     <Link href={href} className={cn("inline-flex items-center gap-2", className)}>
       <BrandGlyph className={iconClassName} />
-      {withText ? <span className={cn("text-sm font-semibold tracking-tight", textClassName)}>{APP_NAME}</span> : null}
+      {withText ? (
+        <span className={cn("text-sm font-semibold tracking-tight", textClassName)}>
+          {showLegalSuffix ? (
+            <>
+              {APP_NAME} <span className="font-medium text-muted-foreground">by</span>{" "}
+              <span className="text-emerald-600 dark:text-emerald-400">surajv.dev</span>
+            </>
+          ) : (
+            APP_NAME
+          )}
+        </span>
+      ) : null}
     </Link>
   );
 }

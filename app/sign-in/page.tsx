@@ -61,7 +61,7 @@ function SignInPageContent() {
     <div className="min-h-screen bg-linear-to-b from-background to-muted/20">
       <header className="border-b bg-background/90 backdrop-blur">
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
-          <BrandLogo href="/" />
+          <BrandLogo href="/" showLegalSuffix />
 
           <div className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <Link href="/" className="transition hover:text-foreground">Home</Link>

@@ -20,7 +20,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
     <div className="min-h-screen bg-linear-to-b from-background via-background to-muted/30">
       <header className="border-b bg-background/90 backdrop-blur">
         <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between border-x border-border/50 px-4 sm:px-6">
-          <BrandLogo href="/" />
+          <BrandLogo href="/" showLegalSuffix />
 
           <div className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
             <Link href="/pricing" className="transition hover:text-foreground">Pricing</Link>
