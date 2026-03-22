@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/layout/brand-logo";
 import { PlanCheckoutCard } from "@/components/subscription/plan-checkout-card";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +27,29 @@ export default async function PricingPage() {
     : null;
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-background/90 backdrop-blur">
+        <nav className="mx-auto flex h-16 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
+          <BrandLogo href="/" />
+
+          <div className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
+            <Link href="/" className="transition hover:text-foreground">Home</Link>
+            <Link href="/pricing" className="text-foreground">Pricing</Link>
+            {userId ? <Link href="/dashboard" className="transition hover:text-foreground">Dashboard</Link> : null}
+          </div>
+
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button asChild variant="outline">
+              <Link href={userId ? "/dashboard" : "/sign-in?callbackUrl=%2Fpricing"}>
+                {userId ? "Open dashboard" : "Sign in"}
+              </Link>
+            </Button>
+          </div>
+        </nav>
+      </header>
+
+      <main className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-semibold">Pricing</h1>
@@ -168,6 +192,7 @@ export default async function PricingPage() {
           </CardContent>
         </Card>
       </section>
-    </main>
+      </main>
+    </div>
   );
 }
