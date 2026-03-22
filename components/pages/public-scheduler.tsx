@@ -1,19 +1,13 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { CalendarDays, Clock3, Globe, Video } from "lucide-react";
-import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
-type AvailabilitySlot = {
-  startTimeUtc: string;
-  endTimeUtc: string;
-};
+import { usePublicSchedulerBooking } from "@/components/pages/booking/use-public-scheduler-booking";
 
 type PublicSchedulerProps = {
   hostId: string;
@@ -22,184 +16,42 @@ type PublicSchedulerProps = {
   hostBio: string | null;
   hostTimezone: string;
   eventTypeId: string;
+  eventTypeSlug?: string;
   eventTypeName: string;
   eventDurationMinutes: number;
 };
 
-type BookingConfirmationDetails = {
-  id: string;
-  status: string;
-  createdAt: string;
-  startTimeUtc: string;
-  endTimeUtc: string;
-  guestName: string | null;
-  guestEmail: string;
-  guestNotes: string | null;
-  meetingLink: string | null;
-  integrationStatus?: {
-    calendar?: {
-      attempted: boolean;
-      success: boolean;
-      message: string;
-    };
-    email?: {
-      sent: boolean;
-      message: string;
-    };
-  };
-};
-
 const DISPLAY_LOCALE = "en-US";
 
-function toDateKey(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-}
-
 export function PublicScheduler(props: PublicSchedulerProps) {
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [step, setStep] = useState<"slots" | "details" | "success">("slots");
-  const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
-  const [loadingSlots, setLoadingSlots] = useState(false);
-  const [slotError, setSlotError] = useState<string | null>(null);
-  const [activeSlot, setActiveSlot] = useState<AvailabilitySlot | null>(null);
-  const [guestName, setGuestName] = useState("");
-  const [guestEmail, setGuestEmail] = useState("");
-  const [guestNotes, setGuestNotes] = useState("");
-  const [bookingState, setBookingState] = useState<"idle" | "submitting" | "success">("idle");
-  const [bookingError, setBookingError] = useState<string | null>(null);
-  const [confirmedBooking, setConfirmedBooking] = useState<BookingConfirmationDetails | null>(
-    null
-  );
-
-  const attendeeTimezone = useMemo(
-    () => Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
-    []
-  );
-  const dateKey = useMemo(() => toDateKey(selectedDate), [selectedDate]);
-  const today = useMemo(() => {
-    const value = new Date();
-    value.setHours(0, 0, 0, 0);
-    return value;
-  }, []);
-
-  const loadSlots = useCallback(async (nextDate: Date) => {
-    const nextDateKey = toDateKey(nextDate);
-
-    setLoadingSlots(true);
-    setSlotError(null);
-    setActiveSlot(null);
-    setBookingState("idle");
-    setBookingError(null);
-    setConfirmedBooking(null);
-
-    const query = new URLSearchParams({
-      hostId: props.hostId,
-      eventTypeId: props.eventTypeId,
-      startDate: nextDateKey,
-      endDate: nextDateKey,
-    });
-
-    const response = await fetch(`/api/availability?${query.toString()}`);
-    const payload = await response.json().catch(() => null);
-
-    if (!response.ok || !payload?.success) {
-      setSlotError(payload?.error?.message ?? "Failed to load available slots");
-      setSlots([]);
-      setLoadingSlots(false);
-      return;
-    }
-
-    setSlots(payload.data as AvailabilitySlot[]);
-    setLoadingSlots(false);
-  }, [props.eventTypeId, props.hostId]);
-
-  useEffect(() => {
-    void loadSlots(selectedDate);
-  }, [selectedDate, loadSlots]);
-
-  function onDateChange(nextDate: Date | undefined) {
-    if (!nextDate) {
-      return;
-    }
-
-    setSelectedDate(nextDate);
-    setStep("slots");
-  }
-
-  async function onBookSlot(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!activeSlot) {
-      return;
-    }
-
-    setBookingState("submitting");
-    setBookingError(null);
-
-    const response = await fetch("/api/bookings", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        hostId: props.hostId,
-        eventTypeId: props.eventTypeId,
-        startTimeUtc: activeSlot.startTimeUtc,
-        endTimeUtc: activeSlot.endTimeUtc,
-        guestEmail,
-        guestName: guestName || undefined,
-        guestNotes: guestNotes || undefined,
-        attendeeTimezone,
-      }),
-    });
-
-    const payload = await response.json().catch(() => null);
-
-    if (!response.ok || !payload?.success) {
-      setBookingError(payload?.error?.message ?? "Failed to create booking");
-      toast.error(payload?.error?.message ?? "Failed to create booking");
-      setBookingState("idle");
-      return;
-    }
-
-    const booking = payload.data as {
-      id: string;
-      status: string;
-      createdAt: string;
-      startTimeUtc: string;
-      endTimeUtc: string;
-      guestName: string | null;
-      guestEmail: string;
-      guestNotes: string | null;
-      meetingLink: string | null;
-      integrationStatus?: {
-        calendar?: {
-          attempted: boolean;
-          success: boolean;
-          message: string;
-        };
-        email?: {
-          sent: boolean;
-          message: string;
-        };
-      };
-    };
-
-    toast.success("Booking confirmed");
-
-    if (booking.integrationStatus?.calendar?.attempted && !booking.integrationStatus.calendar.success) {
-      toast.warning(booking.integrationStatus.calendar.message);
-    }
-
-    if (booking.integrationStatus?.email && !booking.integrationStatus.email.sent) {
-      toast.warning(booking.integrationStatus.email.message);
-    }
-
-    setBookingState("success");
-    setConfirmedBooking(booking);
-    setStep("success");
-  }
+  const {
+    selectedDate,
+    step,
+    slots,
+    loadingSlots,
+    slotError,
+    activeSlot,
+    guestName,
+    setGuestName,
+    guestEmail,
+    setGuestEmail,
+    guestNotes,
+    setGuestNotes,
+    bookingState,
+    bookingError,
+    attendeeTimezone,
+    dateKey,
+    today,
+    onDateChange,
+    onSelectSlot,
+    onContinueToDetails,
+    onBookSlot,
+    setStep,
+  } = usePublicSchedulerBooking({
+    hostId: props.hostId,
+    eventTypeId: props.eventTypeId,
+    eventTypeSlug: props.eventTypeSlug,
+  });
 
   function formatSlot(value: string) {
     return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
@@ -217,125 +69,13 @@ export function PublicScheduler(props: PublicSchedulerProps) {
     }).format(value);
   }
 
-  function formatFullDateTime(value: string) {
-    return new Intl.DateTimeFormat(DISPLAY_LOCALE, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      timeZoneName: "short",
-    }).format(new Date(value));
-  }
-
-  function onSelectSlot(slot: AvailabilitySlot) {
-    setActiveSlot(slot);
-  }
-
-  function onContinueToDetails() {
-    if (!activeSlot) {
-      return;
-    }
-
-    setStep("details");
-  }
-
   const hostInitial = props.hostName.trim().charAt(0).toUpperCase() || "H";
-
-  if (step === "success" && confirmedBooking) {
-    return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-        <div className="mx-auto grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
-          <section className="space-y-4 border-b p-6 md:border-b-0 md:border-r">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Step 3 of 3
-            </p>
-
-            <h1 className="text-3xl font-semibold">Booking Confirmed</h1>
-
-            <p className="text-sm text-muted-foreground">
-              Your meeting request has been confirmed and added to the host schedule.
-            </p>
-          </section>
-
-          <section className="space-y-4 p-6">
-            <div className="space-y-3 rounded-lg border bg-background p-4 text-sm">
-              <p><span className="font-medium">Booking ID:</span> {confirmedBooking.id}</p>
-              <p><span className="font-medium">Status:</span> {confirmedBooking.status}</p>
-              <p>
-                <span className="font-medium">With whom:</span> {props.hostName}
-                {confirmedBooking.guestName ? ` and ${confirmedBooking.guestName}` : ""}
-              </p>
-              <p><span className="font-medium">Guest email:</span> {confirmedBooking.guestEmail}</p>
-              <p><span className="font-medium">When:</span> {formatFullDateTime(confirmedBooking.startTimeUtc)}</p>
-              <p><span className="font-medium">Ends:</span> {formatFullDateTime(confirmedBooking.endTimeUtc)}</p>
-              <p><span className="font-medium">Host timezone:</span> {props.hostTimezone}</p>
-              <p><span className="font-medium">Your timezone:</span> {attendeeTimezone}</p>
-              <p><span className="font-medium">Where:</span> Google Meet</p>
-              <p><span className="font-medium">Platform:</span> Google Calendar + Google Meet</p>
-              <p>
-                <span className="font-medium">Meeting link:</span>{" "}
-                {confirmedBooking.meetingLink ? (
-                  <a
-                    href={confirmedBooking.meetingLink}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-primary underline"
-                  >
-                    Join meeting
-                  </a>
-                ) : (
-                  "Will be sent by email after calendar sync"
-                )}
-              </p>
-              <p>
-                <span className="font-medium">Calendar sync:</span>{" "}
-                {confirmedBooking.integrationStatus?.calendar?.message ?? "Not attempted"}
-              </p>
-              <p>
-                <span className="font-medium">Email delivery:</span>{" "}
-                {confirmedBooking.integrationStatus?.email?.message ?? "Unknown"}
-              </p>
-              <p>
-                <span className="font-medium">Created at:</span>{" "}
-                {formatFullDateTime(confirmedBooking.createdAt)}
-              </p>
-              <p>
-                <span className="font-medium">Notes:</span>{" "}
-                {confirmedBooking.guestNotes || "No additional notes"}
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={async () => {
-                  setStep("slots");
-                  setActiveSlot(null);
-                  setGuestName("");
-                  setGuestEmail("");
-                  setGuestNotes("");
-                  setBookingState("idle");
-                  setBookingError(null);
-                  setConfirmedBooking(null);
-                  await loadSlots(selectedDate);
-                }}
-              >
-                Book another slot
-              </Button>
-            </div>
-          </section>
-        </div>
-      </main>
-    );
-  }
 
   if (step === "details" && activeSlot) {
     return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-12 sm:px-6">
-        <div className="mx-auto grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
+      <main className="min-h-svh px-4 py-8 sm:px-6">
+        <div className="mx-auto flex w-full max-w-6xl items-center justify-center py-6">
+          <div className="grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
           <section className="space-y-4 border-b p-6 md:border-b-0 md:border-r">
             <div className="flex items-center gap-3">
               <Avatar size="default" className="ring-2 ring-primary/15">
@@ -428,14 +168,16 @@ export function PublicScheduler(props: PublicSchedulerProps) {
               </div>
             </form>
           </section>
+          </div>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-      <div className="grid gap-0 overflow-hidden rounded-2xl border bg-card lg:grid-cols-[280px_1fr_280px]">
+    <main className="min-h-svh px-4 py-8 sm:px-6">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-center py-6">
+        <div className="grid w-full gap-0 overflow-hidden rounded-2xl border bg-card lg:grid-cols-[280px_1fr_280px]">
         <section className="space-y-4 border-b p-6 lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3">
             <Avatar size="default" className="ring-2 ring-primary/15">
@@ -519,6 +261,7 @@ export function PublicScheduler(props: PublicSchedulerProps) {
             Continue
           </Button>
         </section>
+        </div>
       </div>
     </main>
   );

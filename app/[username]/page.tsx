@@ -5,10 +5,18 @@ import { prisma } from "@/lib/prisma";
 
 type PageProps = {
   params: Promise<{ username: string }>;
+  searchParams: Promise<{ eventTypeSlug?: string | string[] }>;
 };
 
-export default async function PublicProfilePage({ params }: PageProps) {
+export default async function PublicProfilePage({ params, searchParams }: PageProps) {
   const resolved = await params;
+  const query = await searchParams;
+  const requestedSlug =
+    typeof query.eventTypeSlug === "string"
+      ? query.eventTypeSlug
+      : Array.isArray(query.eventTypeSlug)
+        ? query.eventTypeSlug[0]
+        : undefined;
   const rawUsername = resolved.username;
   const normalizedUsername = rawUsername.startsWith("@")
     ? rawUsername.slice(1)
@@ -32,11 +40,12 @@ export default async function PublicProfilePage({ params }: PageProps) {
     notFound();
   }
 
-  const eventType = await prisma.eventType.findFirst({
+  let eventType = await prisma.eventType.findFirst({
     where: {
       hostId: user.id,
       status: "ACTIVE",
       isPublic: true,
+      ...(requestedSlug ? { slug: requestedSlug } : {}),
     },
     orderBy: {
       createdAt: "asc",
@@ -45,8 +54,28 @@ export default async function PublicProfilePage({ params }: PageProps) {
       id: true,
       name: true,
       duration: true,
+      slug: true,
     },
   });
+
+  if (!eventType && requestedSlug) {
+    eventType = await prisma.eventType.findFirst({
+      where: {
+        hostId: user.id,
+        status: "ACTIVE",
+        isPublic: true,
+      },
+      orderBy: {
+        createdAt: "asc",
+      },
+      select: {
+        id: true,
+        name: true,
+        duration: true,
+        slug: true,
+      },
+    });
+  }
 
   if (!eventType) {
     return (
@@ -67,6 +96,7 @@ export default async function PublicProfilePage({ params }: PageProps) {
       hostBio={user.bio}
       hostTimezone={user.timezone || "UTC"}
       eventTypeId={eventType.id}
+      eventTypeSlug={eventType.slug}
       eventTypeName={eventType.name}
       eventDurationMinutes={eventType.duration}
     />

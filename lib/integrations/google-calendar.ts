@@ -50,7 +50,16 @@ type GoogleRequestArgs = {
 
 type GoogleRequestResult = {
   response: Response | null;
-  reason?: "GOOGLE_NOT_CONNECTED" | "TOKEN_UNAVAILABLE";
+  reason?:
+    | "GOOGLE_NOT_CONNECTED"
+    | "TOKEN_UNAVAILABLE"
+    | "GOOGLE_REAUTH_REQUIRED"
+    | "GOOGLE_TOKEN_REFRESH_FAILED";
+};
+
+type RefreshGoogleAccessTokenResult = {
+  accessToken: string | null;
+  reason?: "GOOGLE_REAUTH_REQUIRED" | "GOOGLE_TOKEN_REFRESH_FAILED";
 };
 
 type GoogleCalendarEventResponse = {
@@ -96,12 +105,15 @@ async function getHostGoogleAccount(hostId: string): Promise<HostGoogleAccount |
   });
 }
 
-async function refreshGoogleAccessToken(accountId: string, refreshToken: string) {
+async function refreshGoogleAccessToken(
+  accountId: string,
+  refreshToken: string
+): Promise<RefreshGoogleAccessTokenResult> {
   const clientId = process.env.GOOGLE_CLIENT_ID;
   const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
 
   if (!clientId || !clientSecret) {
-    return null;
+    return { accessToken: null, reason: "GOOGLE_TOKEN_REFRESH_FAILED" };
   }
 
   const refreshBody = new URLSearchParams({
@@ -120,16 +132,27 @@ async function refreshGoogleAccessToken(accountId: string, refreshToken: string)
   });
 
   if (!response.ok) {
-    return null;
+    const errorPayload = (await response.json().catch(() => null)) as
+      | {
+          error?: string;
+        }
+      | null;
+
+    if (errorPayload?.error === "invalid_grant") {
+      return { accessToken: null, reason: "GOOGLE_REAUTH_REQUIRED" };
+    }
+
+    return { accessToken: null, reason: "GOOGLE_TOKEN_REFRESH_FAILED" };
   }
 
   const tokenData = (await response.json()) as {
     access_token?: string;
     expires_in?: number;
+    refresh_token?: string;
   };
 
   if (!tokenData.access_token || !tokenData.expires_in) {
-    return null;
+    return { accessToken: null, reason: "GOOGLE_TOKEN_REFRESH_FAILED" };
   }
 
   const nextExpiry = new Date(Date.now() + tokenData.expires_in * 1000);
@@ -139,19 +162,25 @@ async function refreshGoogleAccessToken(accountId: string, refreshToken: string)
     data: {
       accessToken: tokenData.access_token,
       accessTokenExpiresAt: nextExpiry,
+      refreshToken: tokenData.refresh_token ?? undefined,
     },
   });
 
-  return tokenData.access_token;
+  return { accessToken: tokenData.access_token };
 }
 
 async function getValidGoogleAccessToken(account: HostGoogleAccount) {
   if (account.accessToken && !isTokenExpired(account.accessTokenExpiresAt)) {
-    return account.accessToken;
+    return {
+      accessToken: account.accessToken,
+    } as const;
   }
 
   if (!account.refreshToken) {
-    return account.accessToken;
+    return {
+      accessToken: account.accessToken,
+      reason: "TOKEN_UNAVAILABLE",
+    } as const;
   }
 
   return refreshGoogleAccessToken(account.id, account.refreshToken);
@@ -167,12 +196,18 @@ async function sendGoogleCalendarRequest(args: GoogleRequestArgs): Promise<Googl
     };
   }
 
-  const initialAccessToken = await getValidGoogleAccessToken(account);
+  const initialTokenResult = await getValidGoogleAccessToken(account);
+  const initialAccessToken = initialTokenResult.accessToken;
 
   if (!initialAccessToken) {
     return {
       response: null,
-      reason: "TOKEN_UNAVAILABLE",
+      reason:
+        initialTokenResult.reason === "GOOGLE_REAUTH_REQUIRED"
+          ? "GOOGLE_REAUTH_REQUIRED"
+          : initialTokenResult.reason === "GOOGLE_TOKEN_REFRESH_FAILED"
+            ? "GOOGLE_TOKEN_REFRESH_FAILED"
+            : "TOKEN_UNAVAILABLE",
     };
   }
 
@@ -198,13 +233,20 @@ async function sendGoogleCalendarRequest(args: GoogleRequestArgs): Promise<Googl
     return { response };
   }
 
-  const refreshedAccessToken = await refreshGoogleAccessToken(
+  const refreshedTokenResult = await refreshGoogleAccessToken(
     account.id,
     account.refreshToken
   );
+  const refreshedAccessToken = refreshedTokenResult.accessToken;
 
   if (!refreshedAccessToken) {
-    return { response };
+    return {
+      response: null,
+      reason:
+        refreshedTokenResult.reason === "GOOGLE_REAUTH_REQUIRED"
+          ? "GOOGLE_REAUTH_REQUIRED"
+          : "GOOGLE_TOKEN_REFRESH_FAILED",
+    };
   }
 
   response = await executeWithAccessToken(refreshedAccessToken);
@@ -225,6 +267,22 @@ async function extractGoogleApiErrorMessage(response: Response) {
   } catch {
     return fallbackMessage;
   }
+}
+
+function buildGuestSafeCalendarErrorMessage(reason: GoogleRequestResult["reason"]) {
+  if (reason === "GOOGLE_NOT_CONNECTED") {
+    return "Host has not connected Google Calendar";
+  }
+
+  if (reason === "GOOGLE_REAUTH_REQUIRED") {
+    return "Booking confirmed. Host Google Calendar needs to be reconnected for invite sync.";
+  }
+
+  if (reason === "GOOGLE_TOKEN_REFRESH_FAILED" || reason === "TOKEN_UNAVAILABLE") {
+    return "Booking confirmed. Calendar invite sync is delayed; host will need to reconnect Google Calendar.";
+  }
+
+  return "Google Calendar event was not created";
 }
 
 async function getCalendarEvent(args: {
@@ -340,10 +398,7 @@ export async function createGoogleMeetEventForBooking(
       htmlLink: null,
       meetLink: null,
       errorCode: requestResult.reason,
-      errorMessage:
-        requestResult.reason === "GOOGLE_NOT_CONNECTED"
-          ? "Google account is not connected"
-          : "Google access token is unavailable",
+      errorMessage: buildGuestSafeCalendarErrorMessage(requestResult.reason),
     };
   }
 

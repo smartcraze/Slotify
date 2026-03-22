@@ -19,7 +19,7 @@ export const auth = betterAuth({
       clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
       scope: ["openid", "email", "profile", "https://www.googleapis.com/auth/calendar.events"],
       accessType: "offline",
-      prompt: "login",
+      prompt: "consent",
     },
   },
   plugins: [nextCookies()],

@@ -207,8 +207,17 @@ export async function POST(request: NextRequest) {
             : "Google Calendar event created, waiting for Meet link";
         } else {
           integrationStatus.calendar.success = false;
-          integrationStatus.calendar.message =
-            calendarEvent?.errorMessage ?? "Google Calendar event was not created";
+          if (
+            calendarEvent?.errorCode === "GOOGLE_REAUTH_REQUIRED" ||
+            calendarEvent?.errorCode === "GOOGLE_TOKEN_REFRESH_FAILED" ||
+            calendarEvent?.errorCode === "TOKEN_UNAVAILABLE"
+          ) {
+            integrationStatus.calendar.message =
+              "Booking confirmed. Calendar invite sync is delayed because host Google Calendar needs reconnection.";
+          } else {
+            integrationStatus.calendar.message =
+              calendarEvent?.errorMessage ?? "Google Calendar event was not created";
+          }
         }
       } catch (calendarError) {
         integrationStatus.calendar.success = false;
