@@ -214,3 +214,172 @@
     animation: none;
   }
 }
+
+@keyframes slotify-float-slow {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes slotify-float-fast {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes slotify-slide-row {
+  0% {
+    transform: translateX(0px);
+  }
+  50% {
+    transform: translateX(6px);
+  }
+  100% {
+    transform: translateX(0px);
+  }
+}
+
+@keyframes slotify-orbit-ring {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 0.9;
+  }
+}
+
+@keyframes slotify-media-drift-a {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes slotify-media-drift-b {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(4px);
+  }
+}
+
+@keyframes slotify-rise-card {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0px);
+  }
+}
+
+.slotify-float-slow {
+  animation: slotify-float-slow 6s ease-in-out infinite;
+}
+
+.slotify-float-fast {
+  animation: slotify-float-fast 4.2s ease-in-out infinite;
+}
+
+.slotify-slide-row {
+  animation: slotify-slide-row 4s ease-in-out infinite;
+}
+
+.slotify-scheduling-illustration {
+  animation: slotify-float-slow 5.4s ease-in-out infinite;
+}
+
+.slotify-logo-badge {
+  animation: slotify-float-fast 3.6s ease-in-out infinite;
+}
+
+.slotify-logo-badge-delay-0 {
+  animation-delay: 0ms;
+}
+
+.slotify-logo-badge-delay-1 {
+  animation-delay: 260ms;
+}
+
+.slotify-step-card {
+  min-height: 510px;
+}
+
+.slotify-step-media {
+  min-height: 210px;
+}
+
+.slotify-media-chip {
+  will-change: transform;
+}
+
+.slotify-media-float-a {
+  animation: slotify-media-drift-a 3.4s ease-in-out infinite;
+}
+
+.slotify-media-float-b {
+  animation: slotify-media-drift-b 3.8s ease-in-out infinite;
+}
+
+.slotify-orbit-ring {
+  animation: slotify-orbit-ring 4s ease-in-out infinite;
+}
+
+.slotify-orbit-ring-delay {
+  animation-delay: 260ms;
+}
+
+.slotify-rise-card {
+  opacity: 0;
+  animation: slotify-rise-card 520ms ease-out forwards;
+}
+
+.slotify-rise-delay-0 {
+  animation-delay: 80ms;
+}
+
+.slotify-rise-delay-1 {
+  animation-delay: 160ms;
+}
+
+.slotify-rise-delay-2 {
+  animation-delay: 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slotify-float-slow,
+  .slotify-float-fast,
+  .slotify-slide-row,
+  .slotify-scheduling-illustration,
+  .slotify-logo-badge,
+  .slotify-logo-badge-delay-0,
+  .slotify-logo-badge-delay-1,
+  .slotify-media-float-a,
+  .slotify-media-float-b,
+  .slotify-orbit-ring,
+  .slotify-orbit-ring-delay,
+  .slotify-rise-card,
+  .slotify-rise-delay-0,
+  .slotify-rise-delay-1,
+  .slotify-rise-delay-2 {
+    animation: none;
+    opacity: 1;
+  }
+}
