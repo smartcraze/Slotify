@@ -23,7 +23,27 @@ export default async function EventTypesPage() {
       username={user.username}
       subscriptionTier={user.subscriptionTier}
     >
-      <Card>
+      <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-4 text-emerald-900">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-sm font-semibold">Start taking bookings with your public page</p>
+            <p className="text-xs text-emerald-800/90">
+              Share this link with your audience: /{user.username}?overlayCalendar=true
+            </p>
+          </div>
+          <Link
+            href={{ pathname: `/${user.username}`, query: { overlayCalendar: "true" } }}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+          >
+            Open booking page
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+          </Link>
+        </div>
+      </div>
+
+      <Card className="mt-4">
         <CardHeader>
           <CardTitle>Create event type</CardTitle>
           <CardDescription>Add a new scheduling type for your public page</CardDescription>

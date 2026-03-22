@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -38,6 +39,9 @@ export function DashboardMobileNav(props: DashboardMobileNavProps) {
       <SheetContent side="left" className="w-80">
         <SheetHeader>
           <SheetTitle>Dashboard</SheetTitle>
+          <SheetDescription className="sr-only">
+            Dashboard navigation links and account actions.
+          </SheetDescription>
         </SheetHeader>
 
         <div className="space-y-1 p-4">

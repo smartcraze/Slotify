@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getHostSetupStatus, requireDashboardUser } from "@/lib/dashboard";
 import { prisma } from "@/lib/prisma";
+import { CalendarDays, Clock3, Crown, Globe2 } from "lucide-react";
 
 function fmt(date: Date) {
   return new Intl.DateTimeFormat(undefined, {
@@ -49,10 +50,32 @@ export default async function DashboardPage() {
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Plan" value={user.subscriptionTier} hint={user.subscriptionStatus} />
-        <StatCard label="Timezone" value={user.timezone || "UTC"} hint="Host timezone" />
-        <StatCard label="Event types" value={eventTypeCount} />
-        <StatCard label="Availability rules" value={availabilityRuleCount} />
+        <StatCard
+          label="Plan"
+          value={user.subscriptionTier}
+          hint={user.subscriptionStatus}
+          icon={<Crown className="size-4" aria-hidden="true" />}
+          iconClassName="bg-amber-100 text-amber-700"
+        />
+        <StatCard
+          label="Timezone"
+          value={user.timezone || "UTC"}
+          hint="Host timezone"
+          icon={<Globe2 className="size-4" aria-hidden="true" />}
+          iconClassName="bg-sky-100 text-sky-700"
+        />
+        <StatCard
+          label="Event types"
+          value={eventTypeCount}
+          icon={<CalendarDays className="size-4" aria-hidden="true" />}
+          iconClassName="bg-fuchsia-100 text-fuchsia-700"
+        />
+        <StatCard
+          label="Availability rules"
+          value={availabilityRuleCount}
+          icon={<Clock3 className="size-4" aria-hidden="true" />}
+          iconClassName="bg-emerald-100 text-emerald-700"
+        />
       </section>
 
       <section className="mt-6 grid gap-4 lg:grid-cols-2">

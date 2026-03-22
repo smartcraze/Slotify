@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,18 +35,34 @@ function StepItem(props: {
 }
 
 export function SetupChecklistCard(props: SetupChecklistCardProps) {
+  const [isOpen, setIsOpen] = useState(true);
   const complete =
     props.setup.hasEventType && props.setup.hasAvailability && props.setup.hasGoogleCalendar;
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Host setup checklist</CardTitle>
-        <CardDescription>
-          Complete these steps so users can book confidently and meetings sync to Google Calendar.
-        </CardDescription>
+      <CardHeader className="gap-3">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <CardTitle>Host setup checklist</CardTitle>
+            <CardDescription>
+              Complete these steps so users can book confidently and meetings sync to Google Calendar.
+            </CardDescription>
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+            onClick={() => setIsOpen((value) => !value)}
+            aria-expanded={isOpen}
+          >
+            {isOpen ? "Collapse" : "Expand"}
+            {isOpen ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
+          </Button>
+        </div>
       </CardHeader>
-      <CardContent className="space-y-2">
+      {isOpen ? <CardContent className="space-y-2">
         <StepItem
           label="Create at least one event type"
           done={props.setup.hasEventType}
@@ -69,7 +89,7 @@ export function SetupChecklistCard(props: SetupChecklistCardProps) {
             Tip: connect Google Calendar last to enable automatic event creation and Meet links.
           </p>
         )}
-      </CardContent>
+      </CardContent> : null}
     </Card>
   );
 }
