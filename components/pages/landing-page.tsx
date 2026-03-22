@@ -3,6 +3,7 @@ import Image from "next/image";
 import { CalendarCheck2, Check, Clock3, LogIn, Sparkles } from "lucide-react";
 
 import { BrandLogo } from "@/components/layout/brand-logo";
+import { FeaturesCard } from "@/components/pages/features-card";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -113,6 +114,10 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
               </CardContent>
             </Card>
           </div>
+        </section>
+
+        <section className="mt-12">
+          <FeaturesCard />
         </section>
 
       </main>
