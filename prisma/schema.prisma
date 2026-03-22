@@ -71,8 +71,81 @@ model User {
   availabilityRules AvailabilityRule[]
   bookings          Booking[]
   calendarConnections CalendarConnection[]
-  payments          Payment[]
   notificationLogs  NotificationLog[]
+  subscriptionOrders SubscriptionOrder[]
+  couponRedemptions CouponRedemption[]
+}
+
+model Coupon {
+  id                 String             @id @default(cuid())
+  code               String             @unique
+  name               String
+  description        String?
+  discountType       CouponDiscountType
+  discountValue      Int
+  maxDiscountInr     Int?
+  minOrderAmountInr  Int?
+  applicableTiers    SubscriptionTier[]
+  isActive           Boolean            @default(true)
+  startsAt           DateTime?
+  endsAt             DateTime?
+  usageLimit         Int?
+  perUserLimit       Int?               @default(1)
+  usedCount          Int                @default(0)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  redemptions        CouponRedemption[]
+  orders             SubscriptionOrder[]
+
+  @@index([isActive])
+}
+
+model SubscriptionOrder {
+  id                 String                @id @default(cuid())
+  userId             String
+  planTier           SubscriptionTier
+  billingCycle       BillingCycle
+  status             SubscriptionOrderStatus @default(CREATED)
+  amountInr          Int
+  discountInr        Int                   @default(0)
+  finalAmountInr     Int
+  currency           String                @default("INR")
+  couponId           String?
+  couponCode         String?
+  razorpayOrderId    String                @unique
+  razorpayPaymentId  String?               @unique
+  razorpaySignature  String?
+  periodStartsAt     DateTime?
+  periodEndsAt       DateTime?
+  paidAt             DateTime?
+  failedReason       String?
+  createdAt          DateTime              @default(now())
+  updatedAt          DateTime              @updatedAt
+
+  user               User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coupon             Coupon?               @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  couponRedemption   CouponRedemption?
+
+  @@index([userId, status])
+  @@index([couponId])
+}
+
+model CouponRedemption {
+  id                String             @id @default(cuid())
+  couponId          String
+  orderId           String             @unique
+  userId            String
+  code              String
+  discountInr       Int
+  createdAt         DateTime           @default(now())
+
+  coupon            Coupon             @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  order             SubscriptionOrder  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([couponId, userId])
+  @@index([userId, code])
 }
 
 model EventType {
@@ -140,7 +213,6 @@ model Booking {
   host            User          @relation(fields: [hostId], references: [id], onDelete: Cascade)
   eventType       EventType     @relation(fields: [eventTypeId], references: [id], onDelete: Cascade)
   attendees       Attendee[]
-  payment         Payment?
   notificationLogs NotificationLog[]
 
   @@unique([hostId, eventTypeId, startTimeUtc])
@@ -182,33 +254,6 @@ model CalendarConnection {
 
   @@unique([userId, provider])
   @@index([userId, status])
-}
-
-model Payment {
-  id                       String        @id @default(cuid())
-  bookingId                String        @unique
-  hostId                   String
-  amount                   Int
-  currency                 String        @default("INR")
-  status                   PaymentStatus @default(PENDING)
-  razorpayOrderId          String        @unique
-  razorpayPaymentId        String?       @unique
-  razorpaySignature        String?
-  razorpayRefundId         String?       @unique
-  failureCode              String?
-  failureDescription       String?
-  refundAmount             Int?
-  refundedAt               DateTime?
-  capturedAt               DateTime?
-  createdAt                DateTime      @default(now())
-  updatedAt                DateTime      @updatedAt
-
-  booking                  Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  host                     User          @relation(fields: [hostId], references: [id], onDelete: Cascade)
-
-  @@index([bookingId])
-  @@index([hostId, status])
-  @@index([razorpayPaymentId])
 }
 
 model NotificationLog {
@@ -254,13 +299,6 @@ enum CalendarConnectionStatus {
   ERROR
 }
 
-enum PaymentStatus {
-  PENDING
-  COMPLETED
-  FAILED
-  REFUNDED
-}
-
 enum NotificationStatus {
   PENDING
   SENT
@@ -289,6 +327,24 @@ enum SubscriptionStatus {
   ACTIVE
   PAST_DUE
   CANCELED
+}
+
+enum BillingCycle {
+  MONTHLY
+  YEARLY
+}
+
+enum CouponDiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum SubscriptionOrderStatus {
+  CREATED
+  PAID
+  FAILED
+  CANCELED
+  EXPIRED
 }
 
 

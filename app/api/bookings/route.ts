@@ -62,7 +62,6 @@ export async function GET(request: NextRequest) {
     include: {
       attendees: true,
       eventType: true,
-      payment: true,
     },
     orderBy: {
       startTimeUtc: "asc",

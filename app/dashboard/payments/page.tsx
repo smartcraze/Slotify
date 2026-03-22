@@ -1,5 +1,5 @@
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
-import { TestUpgradeButton } from "@/components/subscription/test-upgrade-button";
+import { PlanCheckoutCard } from "@/components/subscription/plan-checkout-card";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SUBSCRIPTION_PLANS } from "@/data/subscription-plans";
@@ -9,10 +9,18 @@ import { prisma } from "@/lib/prisma";
 export default async function PaymentsPage() {
   const user = await requireDashboardUser();
 
-  const payments = await prisma.payment.findMany({
-    where: { hostId: user.id },
+  const subscriptionOrders = await prisma.subscriptionOrder.findMany({
+    where: { userId: user.id },
     orderBy: { createdAt: "desc" },
     take: 20,
+  });
+
+  const currentUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: {
+      name: true,
+      email: true,
+    },
   });
 
   return (
@@ -27,43 +35,45 @@ export default async function PaymentsPage() {
         <CardHeader>
           <CardTitle>Subscription plans</CardTitle>
           <CardDescription>
-            Plan catalog from your pricing configuration with quick test activation.
+            Upgrade your plan with secure Razorpay checkout.
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-2 md:grid-cols-2">
+        <CardContent className="grid gap-3 lg:grid-cols-3">
           {SUBSCRIPTION_PLANS.map((plan) => (
-            <div key={plan.tier} className="rounded-md border p-3">
-              <p className="text-sm font-medium">{plan.name}</p>
-              <p className="text-xs text-muted-foreground">INR {plan.monthlyPriceInr}/month</p>
-              {user.subscriptionTier === plan.tier ? <Badge className="mt-2">Current</Badge> : null}
-              {plan.tier !== "FREE" ? (
-                <div className="mt-3">
-                  <TestUpgradeButton tier={plan.tier} className="w-full" />
-                </div>
-              ) : null}
-            </div>
+            <PlanCheckoutCard
+              key={plan.tier}
+              plan={plan}
+              isAuthenticated
+              isCurrentPlan={user.subscriptionTier === plan.tier}
+              customerName={currentUser?.name}
+              customerEmail={currentUser?.email}
+            />
           ))}
         </CardContent>
       </Card>
 
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle>Payment records</CardTitle>
+          <CardTitle>Subscription orders</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
-          {payments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No payment records yet.</p>
+          {subscriptionOrders.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No subscription orders yet.</p>
           ) : (
-            payments.map((payment) => (
-              <div key={payment.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm">
-                <p>Order: {payment.razorpayOrderId}</p>
-                <p>Amount: {payment.amount} {payment.currency}</p>
-                <Badge variant="outline">{payment.status}</Badge>
+            subscriptionOrders.map((order) => (
+              <div key={order.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3 text-sm">
+                <p>{order.planTier} ({order.billingCycle})</p>
+                <p>
+                  INR {order.finalAmountInr}
+                  {order.discountInr > 0 ? ` (saved ${order.discountInr})` : ""}
+                </p>
+                <Badge variant="outline">{order.status}</Badge>
               </div>
             ))
           )}
         </CardContent>
       </Card>
+
     </DashboardPageShell>
   );
 }
