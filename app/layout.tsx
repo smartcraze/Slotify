@@ -70,6 +70,9 @@ export const metadata: Metadata = {
       "max-video-preview": -1,
     },
   },
+  verification: {
+    google: "WOBvoHYJ_MAcI-cvXhCIExK6oX9kAlwLhIdJcph4kmo",
+  },
   category: "productivity",
 };
 
