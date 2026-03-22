@@ -1,12 +1,12 @@
 import Link from "next/link";
 
 import { DashboardPageShell } from "@/components/dashboard/dashboard-page-shell";
-import { SetupChecklistCard } from "@/components/dashboard/setup-checklist-card";
+import { PublicBookingLinkCard } from "@/components/dashboard/public-booking-link-card";
 import { StatCard } from "@/components/dashboard/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { getHostSetupStatus, requireDashboardUser } from "@/lib/dashboard";
+import { requireDashboardUser } from "@/lib/dashboard";
 import { prisma } from "@/lib/prisma";
 import { CalendarDays, Clock3, Crown, Globe2 } from "lucide-react";
 
@@ -21,7 +21,7 @@ export default async function DashboardPage() {
   const user = await requireDashboardUser();
   const now = new Date();
 
-  const [eventTypeCount, upcomingBookings, availabilityRuleCount, setupStatus] = await Promise.all([
+  const [eventTypeCount, upcomingBookings, availabilityRuleCount] = await Promise.all([
     prisma.eventType.count({ where: { hostId: user.id } }),
     prisma.booking.findMany({
       where: {
@@ -34,7 +34,6 @@ export default async function DashboardPage() {
       take: 6,
     }),
     prisma.availabilityRule.count({ where: { hostId: user.id } }),
-    getHostSetupStatus(user.id),
   ]);
 
   return (
@@ -46,7 +45,7 @@ export default async function DashboardPage() {
       subscriptionTier={user.subscriptionTier}
     >
       <section className="mb-4">
-        <SetupChecklistCard setup={setupStatus} />
+        <PublicBookingLinkCard username={user.username} />
       </section>
 
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">

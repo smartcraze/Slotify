@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { DashboardHeader } from "@/components/dashboard/dashboard-header";
-import { DashboardSetupBanner } from "@/components/dashboard/dashboard-setup-banner";
 import { DashboardSidebar } from "@/components/dashboard/dashboard-sidebar";
 import { prisma } from "@/lib/prisma";
 
@@ -40,7 +39,6 @@ export async function DashboardPageShell(props: DashboardPageShellProps) {
             profileImage={profile?.image}
           />
           <div className="px-4 py-6 sm:px-6">
-            <DashboardSetupBanner userId={props.userId} />
             {props.children}
           </div>
         </div>
