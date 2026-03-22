@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 import { BrandLogo } from "@/components/layout/brand-logo";
@@ -8,8 +9,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SUBSCRIPTION_COUPONS } from "@/data/subscription-coupons";
 import { SUBSCRIPTION_PLANS } from "@/data/subscription-plans";
+import { APP_NAME } from "@/data/branding";
 import { getAuthenticatedUserId } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
+
+export const metadata: Metadata = {
+  title: "Pricing",
+  description: "Compare Slotify plans, coupon eligibility, and secure billing rules.",
+  alternates: {
+    canonical: "/pricing",
+  },
+  openGraph: {
+    title: `${APP_NAME} Pricing`,
+    description: "Compare Slotify plans, coupon eligibility, and secure billing rules.",
+    url: "/pricing",
+    images: ["/sheduling.png"],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} Pricing`,
+    description: "Compare Slotify plans, coupon eligibility, and secure billing rules.",
+    images: ["/sheduling.png"],
+  },
+};
 
 export default async function PricingPage() {
   const userId = await getAuthenticatedUserId();

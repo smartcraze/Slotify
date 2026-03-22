@@ -18,9 +18,59 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: APP_NAME,
+  metadataBase: new URL(siteUrl),
+  applicationName: APP_NAME,
+  title: {
+    default: `${APP_NAME} | Smart Scheduling`,
+    template: `%s | ${APP_NAME}`,
+  },
   description: APP_DESCRIPTION,
+  keywords: [
+    "scheduling",
+    "appointment booking",
+    "calendar",
+    "meeting links",
+    "Slotify",
+  ],
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    type: "website",
+    url: "/",
+    siteName: APP_NAME,
+    title: `${APP_NAME} | Smart Scheduling`,
+    description: APP_DESCRIPTION,
+    images: [
+      {
+        url: "/sheduling.png",
+        width: 1200,
+        height: 630,
+        alt: `${APP_NAME} scheduling preview`,
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} | Smart Scheduling`,
+    description: APP_DESCRIPTION,
+    images: ["/sheduling.png"],
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+      "max-video-preview": -1,
+    },
+  },
+  category: "productivity",
 };
 
 export default function RootLayout({
@@ -37,7 +87,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <ThemeProvider>
           <div className="flex-1">{children}</div>
-          <Toaster richColors closeButton />
+          <Toaster richColors />
         </ThemeProvider>
       </body>
     </html>
