@@ -73,9 +73,9 @@ export function PublicScheduler(props: PublicSchedulerProps) {
 
   if (step === "details" && activeSlot) {
     return (
-      <main className="min-h-svh px-4 py-8 sm:px-6">
-        <div className="mx-auto flex w-full max-w-6xl items-center justify-center py-6">
-          <div className="grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
+      <main className="flex min-h-svh items-center px-4 py-6 sm:px-6 md:py-8">
+        <div className="mx-auto w-full max-w-6xl">
+          <div className="mx-auto grid w-full max-w-3xl gap-0 overflow-hidden rounded-2xl border bg-card md:grid-cols-[320px_1fr]">
           <section className="space-y-4 border-b p-6 md:border-b-0 md:border-r">
             <div className="flex items-center gap-3">
               <Avatar size="default" className="ring-2 ring-primary/15">
@@ -175,8 +175,8 @@ export function PublicScheduler(props: PublicSchedulerProps) {
   }
 
   return (
-    <main className="min-h-svh px-4 py-8 sm:px-6">
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-center py-6">
+    <main className="flex min-h-svh items-center px-4 py-6 sm:px-6 md:py-8">
+      <div className="mx-auto w-full max-w-6xl">
         <div className="grid w-full gap-0 overflow-hidden rounded-2xl border bg-card lg:grid-cols-[280px_1fr_280px]">
         <section className="space-y-4 border-b p-6 lg:border-b-0 lg:border-r">
           <div className="flex items-center gap-3">

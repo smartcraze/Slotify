@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { requireDashboardUser } from "@/lib/dashboard";
 import { prisma } from "@/lib/prisma";
+import { ExternalLink } from "lucide-react";
+import Link from "next/link";
 
 export default async function EventTypesPage() {
   const user = await requireDashboardUser();
@@ -43,11 +45,23 @@ export default async function EventTypesPage() {
               <div key={eventType.id} className="flex flex-wrap items-center justify-between gap-2 rounded-md border p-3">
                 <div>
                   <p className="text-sm font-medium">{eventType.name}</p>
-                  <p className="text-xs text-muted-foreground">/{user.username}/{eventType.slug} • {eventType.duration} min</p>
+                  <p className="text-xs text-muted-foreground">/{user.username}?eventTypeSlug={eventType.slug} • {eventType.duration} min</p>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={eventType.status === "ACTIVE" ? "default" : "secondary"}>{eventType.status}</Badge>
                   {eventType.isPublic ? <Badge variant="outline">Public</Badge> : null}
+                  <Link
+                    href={{
+                      pathname: `/${user.username}`,
+                      query: { overlayCalendar: "true", eventTypeSlug: eventType.slug },
+                    }}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary underline underline-offset-4"
+                  >
+                    Open page
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
+                  </Link>
                 </div>
               </div>
             ))
