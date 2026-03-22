@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 
+import { env } from "@/lib/env";
 import { prisma } from "@/lib/prisma";
 
 export const auth = betterAuth({
@@ -15,8 +16,8 @@ export const auth = betterAuth({
   },
   socialProviders: {
     google: {
-      clientId: process.env.GOOGLE_CLIENT_ID as string,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+      clientId: env.GOOGLE_CLIENT_ID,
+      clientSecret: env.GOOGLE_CLIENT_SECRET,
       scope: ["openid", "email", "profile", "https://www.googleapis.com/auth/calendar.events"],
       accessType: "offline",
       prompt: "consent",

@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { env } from "@/lib/env";
 
 type BookingNotificationType =
   | "BOOKING_CONFIRMATION"
@@ -29,10 +30,15 @@ type EmailAttachment = {
   content: string;
 };
 
-const resendApiKey = process.env.RESEND_API_KEY;
-const resendFromEmail = process.env.RESEND_FROM_EMAIL;
+const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
 
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
+function getResendClient() {
+  if (!resend) {
+    throw new Error("RESEND_API_KEY is not configured");
+  }
+
+  return resend;
+}
 
 function formatDateRange(startTimeUtc: Date, endTimeUtc: Date) {
   return `${startTimeUtc.toISOString()} to ${endTimeUtc.toISOString()} (UTC)`;
@@ -172,17 +178,13 @@ export function verifyResendWebhookSignature(args: {
     signature: string;
   };
 }) {
-  if (!resend) {
-    throw new Error("RESEND_API_KEY is not configured");
-  }
-
-  const webhookSecret = process.env.RESEND_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
+  if (!env.RESEND_WEBHOOK_SECRET) {
     throw new Error("RESEND_WEBHOOK_SECRET is not configured");
   }
 
-  return resend.webhooks.verify({
+  const webhookSecret = env.RESEND_WEBHOOK_SECRET;
+
+  return getResendClient().webhooks.verify({
     payload: args.payload,
     headers: args.headers,
     webhookSecret,
@@ -199,7 +201,7 @@ export async function sendBookingLifecycleEmail(
     };
   }
 
-  if (!resendFromEmail) {
+  if (!env.RESEND_FROM_EMAIL) {
     return {
       data: null,
       error: { message: "RESEND_FROM_EMAIL is not configured" },
@@ -210,7 +212,7 @@ export async function sendBookingLifecycleEmail(
 
   const { data, error } = await resend.emails.send(
     {
-      from: resendFromEmail,
+      from: env.RESEND_FROM_EMAIL,
       to: payload.to,
       subject: getSubject(payload.notificationType, payload.eventTypeName),
       text: buildTextBody(payload),

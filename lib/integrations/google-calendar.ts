@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { env } from "@/lib/env";
 
 type CreateGoogleMeetEventInput = {
   bookingId: string;
@@ -109,16 +110,9 @@ async function refreshGoogleAccessToken(
   accountId: string,
   refreshToken: string
 ): Promise<RefreshGoogleAccessTokenResult> {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-
-  if (!clientId || !clientSecret) {
-    return { accessToken: null, reason: "GOOGLE_TOKEN_REFRESH_FAILED" };
-  }
-
   const refreshBody = new URLSearchParams({
-    client_id: clientId,
-    client_secret: clientSecret,
+    client_id: env.GOOGLE_CLIENT_ID,
+    client_secret: env.GOOGLE_CLIENT_SECRET,
     refresh_token: refreshToken,
     grant_type: "refresh_token",
   });

@@ -1,37 +1,32 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 import Razorpay from "razorpay";
+import { env } from "@/lib/env";
 
 let razorpayClient: Razorpay | null = null;
 
 export function getRazorpayKeyId() {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-
-  if (!keyId) {
+  if (!env.RAZORPAY_KEY_ID) {
     throw new Error("Missing RAZORPAY_KEY_ID");
   }
 
-  return keyId;
+  return env.RAZORPAY_KEY_ID;
 }
 
 function getRazorpayKeySecret() {
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
-
-  if (!keySecret) {
+  if (!env.RAZORPAY_KEY_SECRET) {
     throw new Error("Missing RAZORPAY_KEY_SECRET");
   }
 
-  return keySecret;
+  return env.RAZORPAY_KEY_SECRET;
 }
 
 function getRazorpayWebhookSecret() {
-  const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
-
-  if (!webhookSecret) {
+  if (!env.RAZORPAY_WEBHOOK_SECRET) {
     throw new Error("Missing RAZORPAY_WEBHOOK_SECRET");
   }
 
-  return webhookSecret;
+  return env.RAZORPAY_WEBHOOK_SECRET;
 }
 
 export function getRazorpayClient() {

@@ -16,39 +16,40 @@ function BrandGlyph({ className }: { className?: string }) {
     <span
       aria-hidden="true"
       className={cn(
-        "inline-flex size-9 items-center justify-center rounded-lg bg-linear-to-br from-sky-100 via-emerald-100 to-indigo-100 text-sky-700 shadow-sm dark:from-sky-950/40 dark:via-emerald-950/40 dark:to-indigo-950/40 dark:text-sky-300",
+        "inline-flex size-9 items-center justify-center rounded-xl border border-border/70 bg-card text-foreground shadow-xs",
         className
       )}
     >
       <svg viewBox="0 0 24 24" className="slotify-logo-icon size-5" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <path d="M16 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M8 2v4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M16 3v3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M8 3v3" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
         <path
-          d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5"
+          d="M20 7.5V6.5a2.5 2.5 0 0 0-2.5-2.5h-11A2.5 2.5 0 0 0 4 6.5v11A2.5 2.5 0 0 0 6.5 20H10"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="1.9"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
-        <path d="M3 10h5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M4 9h8.5" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
         <circle
           className="slotify-logo-orbit"
-          cx="16"
-          cy="16"
-          r="6"
+          cx="15"
+          cy="15"
+          r="5.5"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="1.9"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
         <path
           className="slotify-logo-hand"
-          d="M16 14v2.2l1.6 1"
+          d="M15 12.8v2.6l1.8 1.1"
           stroke="currentColor"
-          strokeWidth="2"
+          strokeWidth="1.9"
           strokeLinecap="round"
           strokeLinejoin="round"
         />
+        <circle cx="9" cy="13" r="1.1" className="text-primary" fill="currentColor" />
       </svg>
     </span>
   );
