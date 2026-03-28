@@ -1,12 +1,11 @@
-# Slotify
-
+<img src="https://github.com/user-attachments/assets/ffe89da2-7cc9-437a-92a1-592ef480bfc0" alt="Slotify" width={2753} height={1492} />
 Slotify is a scheduling and booking platform inspired by modern calendar products.
 
 Built with Next.js 16 App Router, React 19, Prisma 7.5, PostgreSQL, Better Auth, Razorpay, and Resend.
 
 ![Slotify Landing](./public/landing.png)
 
-<img src="https://github.com/user-attachments/assets/ffe89da2-7cc9-437a-92a1-592ef480bfc0" alt="Slotify" width={2753} height={1492} />
+
 
 ## Highlights
 
