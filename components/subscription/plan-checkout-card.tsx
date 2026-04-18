@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ type PlanCheckoutCardProps = {
   isCurrentPlan: boolean;
   isGuest?: boolean;
   defaultBillingCycle?: BillingCycle;
+  showBillingToggle?: boolean;
   customerName?: string | null;
   customerEmail?: string | null;
 };
@@ -104,6 +105,12 @@ export function PlanCheckoutCard(props: PlanCheckoutCardProps) {
   const [billingCycle, setBillingCycle] = useState<BillingCycle>(
     props.defaultBillingCycle ?? "MONTHLY"
   );
+
+  useEffect(() => {
+    if (props.defaultBillingCycle) {
+      setBillingCycle(props.defaultBillingCycle);
+    }
+  }, [props.defaultBillingCycle]);
 
   const displayPrice = useMemo(
     () => getPrice(props.plan, billingCycle),
@@ -225,22 +232,24 @@ export function PlanCheckoutCard(props: PlanCheckoutCardProps) {
       </CardHeader>
 
       <CardContent className="space-y-4">
-        <div className="inline-flex rounded-md border p-1 text-xs">
-          <button
-            type="button"
-            className={`rounded px-3 py-1 ${billingCycle === "MONTHLY" ? "bg-foreground text-background" : "text-muted-foreground"}`}
-            onClick={() => setBillingCycle("MONTHLY")}
-          >
-            Monthly
-          </button>
-          <button
-            type="button"
-            className={`rounded px-3 py-1 ${billingCycle === "YEARLY" ? "bg-foreground text-background" : "text-muted-foreground"}`}
-            onClick={() => setBillingCycle("YEARLY")}
-          >
-            Yearly
-          </button>
-        </div>
+        {props.showBillingToggle ?? true ? (
+          <div className="inline-flex rounded-md border p-1 text-xs">
+            <button
+              type="button"
+              className={`rounded px-3 py-1 ${billingCycle === "MONTHLY" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+              onClick={() => setBillingCycle("MONTHLY")}
+            >
+              Monthly
+            </button>
+            <button
+              type="button"
+              className={`rounded px-3 py-1 ${billingCycle === "YEARLY" ? "bg-foreground text-background" : "text-muted-foreground"}`}
+              onClick={() => setBillingCycle("YEARLY")}
+            >
+              Yearly
+            </button>
+          </div>
+        ) : null}
 
         <div>
           <p className="text-3xl font-semibold">INR {displayPrice}</p>
