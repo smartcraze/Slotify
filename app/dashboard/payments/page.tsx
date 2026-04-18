@@ -38,6 +38,7 @@ export default async function PaymentsPage() {
       title="Payments"
       subtitle="Subscription plan and payment records"
       username={user.username}
+      isGuest={user.isGuest}
       subscriptionTier={user.subscriptionTier}
       profileName={currentUser?.name ?? user.name}
       profileImage={user.image}
@@ -58,6 +59,7 @@ export default async function PaymentsPage() {
               isCurrentPlan={user.subscriptionTier === plan.tier}
               customerName={currentUser?.name}
               customerEmail={currentUser?.email}
+              isGuest={user.isGuest}
             />
           ))}
         </CardContent>

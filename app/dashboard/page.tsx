@@ -49,6 +49,7 @@ export default async function DashboardPage() {
       title="Overview"
       subtitle="Your scheduling workspace at a glance"
       username={user.username}
+      isGuest={user.isGuest}
       subscriptionTier={user.subscriptionTier}
       profileName={user.name}
       profileImage={user.image}

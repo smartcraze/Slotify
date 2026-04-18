@@ -5,16 +5,22 @@ import {
   isPrismaUniqueConstraintError,
   parseJsonBody,
 } from "@/lib/api/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 import { onboardingCompleteBodySchema } from "@/types/api/onboarding";
 
 export async function POST(request: NextRequest) {
-  const userId = await getAuthenticatedUserId();
+  const user = await getAuthenticatedUser();
 
-  if (!userId) {
+  if (!user) {
     return fail("UNAUTHORIZED", "Authentication required", 401);
   }
+
+  if (user.isGuest) {
+    return fail("FORBIDDEN", "Guest mode is view-only for onboarding changes", 403);
+  }
+
+  const userId = user.id;
 
   const parsedBody = await parseJsonBody(request, onboardingCompleteBodySchema);
 

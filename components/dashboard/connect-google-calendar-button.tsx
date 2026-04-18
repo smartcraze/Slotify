@@ -4,18 +4,26 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { signIn } from "@/lib/auth-client";
+import { GUEST_MODE_RESTRICTION_MESSAGE } from "@/lib/auth/guest";
 import { Button } from "@/components/ui/button";
 
 type ConnectGoogleCalendarButtonProps = {
   callbackUrl?: string;
+  isGuest?: boolean;
 };
 
 export function ConnectGoogleCalendarButton({
   callbackUrl = "/dashboard/integrations",
+  isGuest,
 }: ConnectGoogleCalendarButtonProps) {
   const [isConnecting, setIsConnecting] = useState(false);
 
   async function onConnectGoogleCalendar() {
+    if (isGuest) {
+      toast.warning(GUEST_MODE_RESTRICTION_MESSAGE);
+      return;
+    }
+
     setIsConnecting(true);
     toast.info("Redirecting to Google...");
 

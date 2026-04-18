@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { GUEST_MODE_RESTRICTION_MESSAGE } from "@/lib/auth/guest";
 
 type BookingActionsProps = {
   bookingId: string;
   status: string;
+  isGuest?: boolean;
 };
 
 export function BookingActions(props: BookingActionsProps) {
@@ -21,6 +23,11 @@ export function BookingActions(props: BookingActionsProps) {
   }
 
   async function cancelBooking() {
+    if (props.isGuest) {
+      toast.warning(GUEST_MODE_RESTRICTION_MESSAGE);
+      return;
+    }
+
     setErrorMessage(null);
     setIsCancelling(true);
 

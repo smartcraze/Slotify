@@ -8,6 +8,7 @@ type DashboardPageShellProps = {
   title: string;
   subtitle: string;
   username: string;
+  isGuest?: boolean;
   subscriptionTier: string;
   profileName?: string | null;
   profileImage?: string | null;
@@ -32,6 +33,11 @@ export async function DashboardPageShell(props: DashboardPageShellProps) {
             profileImage={props.profileImage}
           />
           <div className="px-4 py-6 sm:px-6">
+            {props.isGuest ? (
+              <div className="mb-4 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-950">
+                Guest mode is enabled. You can explore the app, but write actions are disabled.
+              </div>
+            ) : null}
             {props.children}
           </div>
         </div>

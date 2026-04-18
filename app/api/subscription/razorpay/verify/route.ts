@@ -2,18 +2,24 @@ import type { NextRequest } from "next/server";
 
 import { fail, ok } from "@/lib/api/response";
 import { parseJsonBody } from "@/lib/api/validation";
-import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { verifyRazorpayPaymentSignature } from "@/lib/payments/razorpay";
 import { prisma } from "@/lib/prisma";
 import { computeSubscriptionPeriod } from "@/lib/subscription/lifecycle";
 import { verifySubscriptionPaymentBodySchema } from "@/types/api/subscription";
 
 export async function POST(request: NextRequest) {
-  const userId = await getAuthenticatedUserId();
+  const user = await getAuthenticatedUser();
 
-  if (!userId) {
+  if (!user) {
     return fail("UNAUTHORIZED", "Authentication required", 401);
   }
+
+  if (user.isGuest) {
+    return fail("FORBIDDEN", "Guest mode is view-only for payments", 403);
+  }
+
+  const userId = user.id;
 
   const parsedBody = await parseJsonBody(request, verifySubscriptionPaymentBodySchema);
 

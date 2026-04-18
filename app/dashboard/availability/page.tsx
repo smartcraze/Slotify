@@ -19,6 +19,7 @@ export default async function AvailabilityPage() {
       title="Availability"
       subtitle="Inspect generated slots using your API rules"
       username={user.username}
+      isGuest={user.isGuest}
       subscriptionTier={user.subscriptionTier}
       profileName={user.name}
       profileImage={user.image}
@@ -34,7 +35,7 @@ export default async function AvailabilityPage() {
           {eventTypes.length === 0 ? (
             <p className="text-sm text-muted-foreground">Create an active event type first.</p>
           ) : (
-            <AvailabilityChecker hostId={user.id} eventTypes={eventTypes} />
+            <AvailabilityChecker hostId={user.id} eventTypes={eventTypes} isGuest={user.isGuest} />
           )}
         </CardContent>
       </Card>

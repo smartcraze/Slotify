@@ -40,6 +40,7 @@ export default async function BookingsPage() {
       title="Bookings"
       subtitle="Monitor and manage attendee bookings"
       username={user.username}
+      isGuest={user.isGuest}
       subscriptionTier={user.subscriptionTier}
       profileName={user.name}
       profileImage={user.image}
@@ -93,7 +94,7 @@ export default async function BookingsPage() {
                   </div>
                 </div>
 
-                <BookingActions bookingId={booking.id} status={booking.status} />
+                <BookingActions bookingId={booking.id} status={booking.status} isGuest={user.isGuest} />
               </div>
             ))
           )}

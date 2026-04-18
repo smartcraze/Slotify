@@ -31,6 +31,7 @@ export default async function IntegrationsPage() {
       title="Integrations"
       subtitle="Google calendar and notification delivery status"
       username={user.username}
+      isGuest={user.isGuest}
       subscriptionTier={user.subscriptionTier}
       profileName={user.name}
       profileImage={user.image}
@@ -54,7 +55,7 @@ export default async function IntegrationsPage() {
                 <p className="text-xs font-medium">
                   Google Meet links require a connected Google account with Calendar access.
                 </p>
-                <ConnectGoogleCalendarButton callbackUrl="/dashboard/integrations" />
+                <ConnectGoogleCalendarButton callbackUrl="/dashboard/integrations" isGuest={user.isGuest} />
               </div>
             ) : null}
           </CardContent>

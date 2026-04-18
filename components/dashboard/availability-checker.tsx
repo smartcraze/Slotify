@@ -1,9 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { GUEST_MODE_RESTRICTION_MESSAGE } from "@/lib/auth/guest";
 
 type EventTypeOption = {
   id: string;
@@ -18,6 +20,7 @@ type Slot = {
 type AvailabilityCheckerProps = {
   hostId: string;
   eventTypes: EventTypeOption[];
+  isGuest?: boolean;
 };
 
 function dateKey(date: Date) {
@@ -34,6 +37,11 @@ export function AvailabilityChecker(props: AvailabilityCheckerProps) {
   const [loading, setLoading] = useState(false);
 
   async function loadSlots() {
+    if (props.isGuest) {
+      toast.warning(GUEST_MODE_RESTRICTION_MESSAGE);
+      return;
+    }
+
     if (!eventTypeId) {
       return;
     }

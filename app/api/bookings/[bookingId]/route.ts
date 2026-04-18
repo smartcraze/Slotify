@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
-import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { createAndSendBookingNotification } from "@/lib/notifications/booking-email";
 import {
   cancelGoogleCalendarEventForBooking,
@@ -25,11 +25,17 @@ type RouteContext = {
 };
 
 export async function PATCH(request: NextRequest, context: RouteContext) {
-  const userId = await getAuthenticatedUserId();
+  const user = await getAuthenticatedUser();
 
-  if (!userId) {
+  if (!user) {
     return fail("UNAUTHORIZED", "Authentication required", 401);
   }
+
+  if (user.isGuest) {
+    return fail("FORBIDDEN", "Guest mode is view-only for booking updates", 403);
+  }
+
+  const userId = user.id;
 
   const params = await context.params;
   const parsedParams = parseParams(params, bookingParamsSchema);

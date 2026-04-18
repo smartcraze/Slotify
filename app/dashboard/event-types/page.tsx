@@ -29,6 +29,7 @@ export default async function EventTypesPage() {
       title="Event Types"
       subtitle="Create and manage your public booking types"
       username={user.username}
+      isGuest={user.isGuest}
       subscriptionTier={user.subscriptionTier}
       profileName={user.name}
       profileImage={user.image}
@@ -59,7 +60,7 @@ export default async function EventTypesPage() {
           <CardDescription>Add a new scheduling type for your public page</CardDescription>
         </CardHeader>
         <CardContent>
-          <EventTypeCreateForm />
+          <EventTypeCreateForm isGuest={user.isGuest} />
         </CardContent>
       </Card>
 

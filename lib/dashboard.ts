@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 export type HostSetupStatus = {
@@ -11,14 +11,14 @@ export type HostSetupStatus = {
 };
 
 export async function requireDashboardUser() {
-  const userId = await getAuthenticatedUserId();
+  const authUser = await getAuthenticatedUser();
 
-  if (!userId) {
+  if (!authUser) {
     redirect("/sign-in?callbackUrl=%2Fdashboard");
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: userId },
+    where: { id: authUser.id },
     select: {
       id: true,
       name: true,
@@ -35,13 +35,14 @@ export async function requireDashboardUser() {
     redirect("/sign-in");
   }
 
-  if (!user.username) {
+  if (!user.username && !authUser.isGuest) {
     redirect("/onboarding");
   }
 
   return {
     ...user,
-    username: user.username,
+    username: user.username ?? "guest-preview",
+    isGuest: authUser.isGuest,
   };
 }
 

@@ -11,11 +11,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { BillingCycle, SubscriptionPlan } from "@/data/subscription-plans";
+import { GUEST_MODE_RESTRICTION_MESSAGE } from "@/lib/auth/guest";
 
 type PlanCheckoutCardProps = {
   plan: SubscriptionPlan;
   isAuthenticated: boolean;
   isCurrentPlan: boolean;
+  isGuest?: boolean;
   defaultBillingCycle?: BillingCycle;
   customerName?: string | null;
   customerEmail?: string | null;
@@ -118,6 +120,11 @@ export function PlanCheckoutCard(props: PlanCheckoutCardProps) {
   }, [billingCycle, props.plan.monthlyPriceInr, props.plan.yearlyPriceInr]);
 
   async function handlePaidCheckout() {
+    if (props.isGuest) {
+      toast.warning(GUEST_MODE_RESTRICTION_MESSAGE);
+      return;
+    }
+
     setLoading(true);
 
     try {

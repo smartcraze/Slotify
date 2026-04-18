@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
 import { OnboardingForm } from "@/components/pages/onboarding-form";
-import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { getAuthenticatedUser } from "@/lib/auth/session";
 import { prisma } from "@/lib/prisma";
 
 function fallbackUsername(email: string | null) {
@@ -16,11 +16,17 @@ function fallbackUsername(email: string | null) {
 }
 
 export default async function OnboardingPage() {
-  const userId = await getAuthenticatedUserId();
+  const authUser = await getAuthenticatedUser();
 
-  if (!userId) {
+  if (!authUser) {
     redirect("/sign-in?callbackUrl=%2Fonboarding");
   }
+
+  if (authUser.isGuest) {
+    redirect("/dashboard");
+  }
+
+  const userId = authUser.id;
 
   const user = await prisma.user.findUnique({
     where: { id: userId },

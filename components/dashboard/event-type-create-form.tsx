@@ -6,9 +6,11 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { GUEST_MODE_RESTRICTION_MESSAGE } from "@/lib/auth/guest";
 
 type EventTypeCreateFormProps = {
   defaultName?: string;
+  isGuest?: boolean;
 };
 
 export function EventTypeCreateForm(props: EventTypeCreateFormProps) {
@@ -21,6 +23,12 @@ export function EventTypeCreateForm(props: EventTypeCreateFormProps) {
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (props.isGuest) {
+      toast.warning(GUEST_MODE_RESTRICTION_MESSAGE);
+      return;
+    }
+
     setErrorMessage(null);
     setIsSubmitting(true);
 

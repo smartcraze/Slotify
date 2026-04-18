@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 
 import { prisma } from "@/lib/prisma";
 import { fail, ok } from "@/lib/api/response";
-import { getAuthenticatedUserId } from "@/lib/auth/session";
+import { getAuthenticatedUser, getAuthenticatedUserId } from "@/lib/auth/session";
 import { canUserAccessFeature } from "@/lib/subscription/access";
 import {
   isPrismaUniqueConstraintError,
@@ -40,11 +40,17 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const userId = await getAuthenticatedUserId();
+  const user = await getAuthenticatedUser();
 
-  if (!userId) {
+  if (!user) {
     return fail("UNAUTHORIZED", "Authentication required", 401);
   }
+
+  if (user.isGuest) {
+    return fail("FORBIDDEN", "Guest mode is view-only for event type changes", 403);
+  }
+
+  const userId = user.id;
 
   const hasCoreScheduling = await canUserAccessFeature(userId, "CORE_SCHEDULING");
 
