@@ -23,6 +23,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DottedGlowBackground } from "@/components/ui/dotted-glow-background";
+import { DemoVideo } from "../video-demo";
 
 type LandingPageProps = {
   isLoggedIn: boolean;
@@ -32,15 +33,15 @@ const integrations: Array<{
   name: string;
   Icon: ComponentType<{ className?: string; size?: number; stroke?: number }>;
 }> = [
-  { name: "Google", Icon: IconBrandGoogle },
-  { name: "Outlook", Icon: IconBrandOffice },
-  { name: "Google Meet", Icon: IconVideo },
-  { name: "Google Calendar", Icon: IconCalendarEvent },
-  { name: "Microsoft Teams", Icon: IconBrandTeams },
-  { name: "Dashboard", Icon: IconLayoutDashboard },
-  { name: "Zoom", Icon: IconBrandZoom },
-  { name: "Analytics", Icon: IconBrandGoogleAnalytics },
-];
+    { name: "Google", Icon: IconBrandGoogle },
+    { name: "Outlook", Icon: IconBrandOffice },
+    { name: "Google Meet", Icon: IconVideo },
+    { name: "Google Calendar", Icon: IconCalendarEvent },
+    { name: "Microsoft Teams", Icon: IconBrandTeams },
+    { name: "Dashboard", Icon: IconLayoutDashboard },
+    { name: "Zoom", Icon: IconBrandZoom },
+    { name: "Analytics", Icon: IconBrandGoogleAnalytics },
+  ];
 
 const iconTones = ["text-primary", "text-chart-1", "text-chart-2", "text-chart-3", "text-chart-4", "text-chart-5"];
 
@@ -110,7 +111,7 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
         <section className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
           <div className="space-y-5">
             <p className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-1 text-xs font-medium text-muted-foreground">
-            <Sparkles className="size-3.5" />
+              <Sparkles className="size-3.5" />
               Scheduling for individuals and teams
             </p>
 
@@ -163,29 +164,29 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
               }}
             >
               <Card className="slotify-float-slow relative overflow-hidden border-primary/20 bg-background/95 shadow-2xl shadow-primary/10">
-              <DottedGlowBackground
-                className="pointer-events-none mask-radial-to-90% mask-radial-at-center"
-                opacity={1}
-                gap={10}
-                radius={1.6}
-                colorLightVar="--color-neutral-500"
-                glowColorLightVar="--color-neutral-600"
-                colorDarkVar="--color-neutral-500"
-                glowColorDarkVar="--color-sky-800"
-                backgroundOpacity={0}
-                speedMin={0.3}
-                speedMax={1.6}
-                speedScale={1}
-              />
-              <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-background/5 to-background/35" />
+                <DottedGlowBackground
+                  className="pointer-events-none mask-radial-to-90% mask-radial-at-center"
+                  opacity={1}
+                  gap={10}
+                  radius={1.6}
+                  colorLightVar="--color-neutral-500"
+                  glowColorLightVar="--color-neutral-600"
+                  colorDarkVar="--color-neutral-500"
+                  glowColorDarkVar="--color-sky-800"
+                  backgroundOpacity={0}
+                  speedMin={0.3}
+                  speedMax={1.6}
+                  speedScale={1}
+                />
+                <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-transparent via-background/5 to-background/35" />
 
-              <CardHeader className="relative z-10">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <CalendarCheck2 className="size-5" />
-                  Live Scheduling Preview
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="relative z-10 space-y-4">
+                <CardHeader className="relative z-10">
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <CalendarCheck2 className="size-5" />
+                    Live Scheduling Preview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="relative z-10 space-y-4">
                   <motion.div
                     className="relative overflow-hidden rounded-lg border bg-background"
                     style={{ transform: "translateZ(26px)" }}
@@ -202,12 +203,12 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
                     />
                   </motion.div>
 
-                <div className="slotify-slide-row grid grid-cols-3 gap-2 text-xs">
-                  <div className="rounded-md border bg-background px-2 py-2 text-center">09:00</div>
-                  <div className="rounded-md border bg-background px-2 py-2 text-center">09:30</div>
-                  <div className="rounded-md border bg-primary/15 px-2 py-2 text-center font-medium text-primary">10:00</div>
-                </div>
-              </CardContent>
+                  <div className="slotify-slide-row grid grid-cols-3 gap-2 text-xs">
+                    <div className="rounded-md border bg-background px-2 py-2 text-center">09:00</div>
+                    <div className="rounded-md border bg-background px-2 py-2 text-center">09:30</div>
+                    <div className="rounded-md border bg-primary/15 px-2 py-2 text-center font-medium text-primary">10:00</div>
+                  </div>
+                </CardContent>
               </Card>
             </motion.div>
 
@@ -232,6 +233,8 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
         <section className="mt-12">
           <FeaturesCard />
         </section>
+
+        <DemoVideo />
 
         <section className="mt-14">
           <Card className="border-border/80 bg-card/70 p-6 shadow-lg sm:p-8">
@@ -275,11 +278,9 @@ export function LandingPage({ isLoggedIn }: LandingPageProps) {
                       whileInView={{ opacity: 1, y: 0 }}
                       viewport={{ once: true, amount: 0.45 }}
                       transition={{ duration: 0.35, delay: index * 0.03 }}
-                      className={`group flex min-h-34 items-center justify-center border-border p-4 text-center ${
-                        index % 2 === 1 ? "border-l" : ""
-                      } ${index >= 2 ? "border-t" : ""} ${index % 4 !== 0 ? "sm:border-l" : "sm:border-l-0"} ${
-                        index >= 4 ? "sm:border-t" : "sm:border-t-0"
-                      }`}
+                      className={`group flex min-h-34 items-center justify-center border-border p-4 text-center ${index % 2 === 1 ? "border-l" : ""
+                        } ${index >= 2 ? "border-t" : ""} ${index % 4 !== 0 ? "sm:border-l" : "sm:border-l-0"} ${index >= 4 ? "sm:border-t" : "sm:border-t-0"
+                        }`}
                     >
                       <div className="space-y-2">
                         <div className="mx-auto grid size-11 place-items-center transition group-hover:-translate-y-0.5">

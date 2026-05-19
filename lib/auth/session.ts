@@ -11,9 +11,15 @@ export type AuthenticatedUser = {
 };
 
 export async function getAuthenticatedUser(): Promise<AuthenticatedUser | null> {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
+  let session;
+
+  try {
+    session = await auth.api.getSession({
+      headers: await headers(),
+    });
+  } catch {
+    return null;
+  }
 
   if (!session?.user?.id) {
     return null;

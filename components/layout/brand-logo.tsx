@@ -26,7 +26,7 @@ export function BrandLogo({
         alt="Logo"
         width={150}
         height={150}
-        className={iconClassName}
+        className={cn("transition duration-300 dark:invert", iconClassName)}
       />
     </Link>
   );
